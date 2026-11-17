@@ -1,0 +1,29 @@
+name: AudioAdjuster4Jellyfin checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build plugin
+        run: dotnet build --configuration Release
+      - name: Check movie button script
+        run: node --check Configuration/movie-button.js
+      - name: Upload plugin
+        uses: actions/upload-artifact@v4
+        with:
+          name: AudioAdjuster4Jellyfin
+          path: |
+            bin/Release/net10.0/AudioAdjuster4Jellyfin.dll
+            LICENSE
+            NOTICE
+          if-no-files-found: error

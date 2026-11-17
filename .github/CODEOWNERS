@@ -1,0 +1,7 @@
+# Repository owner may approve changes anywhere
+* @Awatatah
+
+# Protect repository governance files
+/.github/ @Awatatah
+/LICENSE @Awatatah
+/NOTICE @Awatatah

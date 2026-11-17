@@ -1,0 +1,11 @@
+[
+    {
+        "category": "General",
+        "guid": "175273b8-46b1-4059-97f7-31931b194342",
+        "name": "AudioAdjuster4Jellyfin",
+        "description": "Queue movie audio adjustments using percentage, decibels, or loudness normalization. Replace the first audio track or add a selectable track, with optional backups.",
+        "overview": "Adjust movie audio with FFmpeg",
+        "owner": "Awatatah",
+        "versions": []
+    }
+]

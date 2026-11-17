@@ -1,0 +1,93 @@
+name: Package release and update Jellyfin catalog
+
+on:
+  push:
+    tags: ['v*.*.*']
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published stable tag to sync to the Jellyfin catalog
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: package-${{ github.ref }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build and attach ZIP to a draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          [[ "$(dotnet msbuild AudioAdjuster4Jellyfin.csproj -getProperty:Version)" == "$version" ]]
+          notes="$RUNNER_TEMP/release-notes.md"
+          python3 .github/scripts/release_notes.py "$GITHUB_REF_NAME" "$GITHUB_REPOSITORY" "$notes"
+          dotnet build --configuration Release
+          archive="$RUNNER_TEMP/audioadjuster4jellyfin_${version}.zip"
+          zip -j "$archive" bin/Release/net10.0/AudioAdjuster4Jellyfin.dll LICENSE NOTICE
+          if gh release view "$GITHUB_REF_NAME" --json isDraft > "$RUNNER_TEMP/draft.json" 2>/dev/null; then
+            if [[ "$(jq -r .isDraft "$RUNNER_TEMP/draft.json")" == true ]]; then
+              gh release upload "$GITHUB_REF_NAME" "$archive" --clobber
+            else
+              echo "Release already published. Use a new version for a new package."
+            fi
+          else
+            gh release create "$GITHUB_REF_NAME" "$archive" --verify-tag --draft \
+              --title "$GITHUB_REF_NAME" --notes-file "$notes"
+          fi
+
+  catalog:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && !github.event.release.prerelease)
+    runs-on: ubuntu-latest
+    concurrency:
+      group: jellyfin-catalog
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+      - name: Index the published ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          version=${RELEASE_TAG#v}
+          archive="audioadjuster4jellyfin_${version}.zip"
+          gh release view "$RELEASE_TAG" --json isDraft,isPrerelease,publishedAt,body > "$RUNNER_TEMP/release.json"
+          gh release download "$RELEASE_TAG" --pattern "$archive" --dir "$RUNNER_TEMP"
+          git show "refs/tags/$RELEASE_TAG:AudioAdjuster4Jellyfin.csproj" > "$RUNNER_TEMP/release.csproj"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          branch=$(git branch --show-current)
+          for attempt in 1 2 3; do
+            git pull --rebase origin "$branch"
+            python3 .github/scripts/update_manifest.py "$GITHUB_REPOSITORY" "$RELEASE_TAG" \
+              "$RUNNER_TEMP/release.csproj" "$RUNNER_TEMP/$archive" "$RUNNER_TEMP/release.json"
+            if git diff --quiet -- manifest.json; then
+              exit 0
+            fi
+            git add manifest.json
+            git commit -m "chore: index AudioAdjuster4Jellyfin $RELEASE_TAG"
+            if git push origin "HEAD:$branch"; then
+              exit 0
+            fi
+            git reset --hard HEAD^
+          done
+          exit 1
