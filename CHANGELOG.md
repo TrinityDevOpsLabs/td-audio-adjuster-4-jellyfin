@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+- Refresh the Jellyfin plugin catalog thumbnail.
+
 ## 1.1.0
 
 - Add a thumbnail to the Jellyfin plugin catalog.
