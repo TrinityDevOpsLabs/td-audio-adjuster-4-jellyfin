@@ -17,50 +17,60 @@ permissions:
 
 jobs:
   package:
-    if: github.event_name == 'push'
+    if: github.event_name != 'release' || !github.event.release.prerelease
     runs-on: ubuntu-latest
     concurrency:
-      group: package-${{ github.ref }}
+      group: package-${{ github.event.release.tag_name || inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: refs/tags/${{ github.event.release.tag_name || inputs.tag || github.ref_name }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      - name: Build and attach ZIP to a draft release
+      - name: Build and attach the plugin ZIP
         env:
           GH_TOKEN: ${{ github.token }}
           DOTNET_NOLOGO: 'true'
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag || github.ref_name }}
         run: |
-          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Release tag '$GITHUB_REF_NAME' must use vMAJOR.MINOR.PATCH, for example v0.1.0."
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Release tag '$RELEASE_TAG' must use vMAJOR.MINOR.PATCH, for example v0.1.0."
             exit 1
           fi
-          version=${GITHUB_REF_NAME#v}
+          version=${RELEASE_TAG#v}
           project_version=$(dotnet msbuild AudioAdjuster4Jellyfin.csproj -nologo -getProperty:Version)
           if [[ "$project_version" != "$version" ]]; then
-            echo "::error::Release tag '$GITHUB_REF_NAME' does not match project version '$project_version'. Tag a commit with a matching Version in AudioAdjuster4Jellyfin.csproj."
+            echo "::error::Release tag '$RELEASE_TAG' does not match project version '$project_version'. Tag a commit with a matching Version in AudioAdjuster4Jellyfin.csproj."
             exit 1
           fi
-          notes="$RUNNER_TEMP/release-notes.md"
-          python3 .github/scripts/release_notes.py "$GITHUB_REF_NAME" "$GITHUB_REPOSITORY" "$notes"
-          dotnet build --configuration Release
-          archive="$RUNNER_TEMP/audioadjuster4jellyfin_${version}.zip"
-          zip -j "$archive" bin/Release/net10.0/AudioAdjuster4Jellyfin.dll LICENSE NOTICE
-          if gh release view "$GITHUB_REF_NAME" --json isDraft > "$RUNNER_TEMP/draft.json" 2>/dev/null; then
-            if [[ "$(jq -r .isDraft "$RUNNER_TEMP/draft.json")" == true ]]; then
-              gh release upload "$GITHUB_REF_NAME" "$archive" --clobber
-            else
-              echo "Release already published. Use a new version for a new package."
-            fi
+          asset="audioadjuster4jellyfin_${version}.zip"
+          release="$RUNNER_TEMP/package-release.json"
+          if [[ "$GITHUB_EVENT_NAME" == push ]]; then
+            gh release view "$RELEASE_TAG" --json assets > "$release" 2>/dev/null || rm -f "$release"
           else
-            gh release create "$GITHUB_REF_NAME" "$archive" --verify-tag --draft \
-              --title "$GITHUB_REF_NAME" --notes-file "$notes"
+            gh release view "$RELEASE_TAG" --json assets > "$release"
+          fi
+          if [[ -f "$release" ]] && jq -e --arg asset "$asset" 'any(.assets[]; .name == $asset)' "$release" > /dev/null; then
+            exit 0
+          fi
+
+          dotnet build --configuration Release
+          archive="$RUNNER_TEMP/$asset"
+          zip -j "$archive" bin/Release/net10.0/AudioAdjuster4Jellyfin.dll LICENSE NOTICE
+          if [[ -f "$release" ]]; then
+            gh release upload "$RELEASE_TAG" "$archive"
+          else
+            notes="$RUNNER_TEMP/release-notes.md"
+            python3 .github/scripts/release_notes.py "$RELEASE_TAG" "$GITHUB_REPOSITORY" "$notes"
+            gh release create "$RELEASE_TAG" "$archive" --verify-tag --draft \
+              --title "$RELEASE_TAG" --notes-file "$notes"
           fi
 
   catalog:
+    needs: package
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && !github.event.release.prerelease)
     runs-on: ubuntu-latest
     concurrency:
@@ -79,7 +89,10 @@ jobs:
           version=${RELEASE_TAG#v}
           archive="audioadjuster4jellyfin_${version}.zip"
           gh release view "$RELEASE_TAG" --json isDraft,isPrerelease,publishedAt,body > "$RUNNER_TEMP/release.json"
-          gh release download "$RELEASE_TAG" --pattern "$archive" --dir "$RUNNER_TEMP"
+          if ! gh release download "$RELEASE_TAG" --pattern "$archive" --dir "$RUNNER_TEMP"; then
+            echo "::error::Could not download '$archive' from '$RELEASE_TAG'. Check the packaging job and the release assets."
+            exit 1
+          fi
           git show "refs/tags/$RELEASE_TAG:AudioAdjuster4Jellyfin.csproj" > "$RUNNER_TEMP/release.csproj"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
