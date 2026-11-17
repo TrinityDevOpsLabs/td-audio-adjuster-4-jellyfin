@@ -48,7 +48,9 @@ Build with the .NET 10 SDK using `dotnet build -c Release`. Release builds targe
 
 Set the project `Version` and push the release commit. In GitHub Releases, create a release with a matching tag such as `v1.0.0`, select the release commit as the tag target, and publish. GitHub Actions builds and attaches the plugin ZIP if it is missing, then uses it to update `manifest.json` on the default branch. If the repository uses immutable releases, push the tag first so the workflow can attach the ZIP to a draft before you publish.
 
-The workflow replaces the GitHub release description with notes generated from the tagged commits and uses those same notes in the Jellyfin catalog. To retry a published release, run **Package release and update Jellyfin catalog** manually with its tag. The workflow token needs write access to the release and default branch.
+The workflow replaces the GitHub release description with notes generated from the tagged commits and uses those same notes in the Jellyfin catalog. To retry a published release, run **Package release and update Jellyfin catalog** manually with its tag.
+
+The catalog job pushes `manifest.json` using the installed GitHub App. Set the repository variable `CATALOG_APP_CLIENT_ID` and the repository secret `CATALOG_APP_PRIVATE_KEY`. The app needs **Contents: Read and write** and an **Always allow** bypass on any branch ruleset that blocks its direct push to the default branch.
 
 ## License
 
