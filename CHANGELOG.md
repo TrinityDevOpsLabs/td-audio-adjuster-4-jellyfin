@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1
+
+- Open the movie picker automatically when search results arrive.
+- Improve result contrast in Jellyfin’s dark theme.
+
 ## 1.1.1
 
 - Refresh the Jellyfin plugin catalog thumbnail.
