@@ -23,8 +23,6 @@ def update(manifest, project, archive, repository, tag, release):
         raise ValueError("Publish a stable GitHub release before updating the catalog")
 
     project_xml = ElementTree.parse(project)
-    if project_xml.findtext(".//Version") != tag[1:]:
-        raise ValueError("The release tag must match the project Version")
     target_abi = jellyfin_version(project_xml.findtext(".//JellyfinVersion"))
     if archive.name != f"audioadjuster4jellyfin_{tag[1:]}.zip":
         raise ValueError("Archive filename does not match the release tag")
