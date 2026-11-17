@@ -80,7 +80,7 @@ jobs:
         with:
           ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
-      - name: Index the published ZIP
+      - name: Update release notes and index the published ZIP
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
@@ -88,19 +88,30 @@ jobs:
           [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
           version=${RELEASE_TAG#v}
           archive="audioadjuster4jellyfin_${version}.zip"
-          gh release view "$RELEASE_TAG" --json isDraft,isPrerelease,publishedAt,body > "$RUNNER_TEMP/release.json"
+          release="$RUNNER_TEMP/release.json"
+          gh release view "$RELEASE_TAG" --json isDraft,isPrerelease,publishedAt,body > "$release"
+          if ! jq -e '.isDraft == false and .isPrerelease == false and .publishedAt != null' "$release" > /dev/null; then
+            echo "::error::Publish a stable release before updating its notes and Jellyfin catalog entry."
+            exit 1
+          fi
           if ! gh release download "$RELEASE_TAG" --pattern "$archive" --dir "$RUNNER_TEMP"; then
             echo "::error::Could not download '$archive' from '$RELEASE_TAG'. Check the packaging job and the release assets."
             exit 1
           fi
           git show "refs/tags/$RELEASE_TAG:AudioAdjuster4Jellyfin.csproj" > "$RUNNER_TEMP/release.csproj"
+          notes="$RUNNER_TEMP/release-notes.md"
+          python3 .github/scripts/release_notes.py "$RELEASE_TAG" "$GITHUB_REPOSITORY" "$notes"
+          if ! cmp -s "$notes" <(jq -j '.body // ""' "$release"); then
+            gh release edit "$RELEASE_TAG" --notes-file "$notes"
+            gh release view "$RELEASE_TAG" --json isDraft,isPrerelease,publishedAt,body > "$release"
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           branch=$(git branch --show-current)
           for attempt in 1 2 3; do
             git pull --rebase origin "$branch"
             python3 .github/scripts/update_manifest.py "$GITHUB_REPOSITORY" "$RELEASE_TAG" \
-              "$RUNNER_TEMP/release.csproj" "$RUNNER_TEMP/$archive" "$RUNNER_TEMP/release.json"
+              "$RUNNER_TEMP/release.csproj" "$RUNNER_TEMP/$archive" "$release"
             if git diff --quiet -- manifest.json; then
               exit 0
             fi
