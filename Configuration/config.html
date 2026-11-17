@@ -1,4 +1,29 @@
 <div id="AudioAdjusterConfig" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-select,emby-checkbox">
+    <style>
+        #audioMovieResult .audioMovieOption {
+            appearance: none;
+            display: block;
+            width: 100%;
+            padding: 0.65em;
+            border: 0;
+            border-bottom: 1px solid rgba(127, 127, 127, 0.35);
+            background: transparent;
+            color: inherit;
+            font: inherit;
+            text-align: start;
+            cursor: pointer;
+        }
+
+        #audioMovieResult .audioMovieOption:hover,
+        #audioMovieResult .audioMovieOption:focus-visible {
+            background: rgba(127, 127, 127, 0.2);
+        }
+
+        #audioMovieResult .audioMovieOption:focus-visible {
+            outline: 2px solid currentColor;
+            outline-offset: -2px;
+        }
+    </style>
     <div data-role="content">
         <div class="content-primary">
             <div id="audioInjectorWarning" role="alert" hidden style="background-color: #8b1d24; color: #fff; padding: 1em; margin-bottom: 1em; border-radius: 4px;">
@@ -150,10 +175,7 @@
                         const details = [movie.ProductionYear, ...names].filter(Boolean).join(' · ');
                         const option = document.createElement('button');
                         option.type = 'button';
-                        option.setAttribute('is', 'emby-button');
-                        option.className = 'emby-button block';
-                        option.style.textAlign = 'start';
-                        option.style.textTransform = 'none';
+                        option.className = 'audioMovieOption';
                         option.textContent = movie.Name;
                         if (details) {
                             const metadata = document.createElement('span');
@@ -171,6 +193,7 @@
                     });
                     movieResult.replaceChildren(...options);
                     movieMatches.hidden = options.length === 0;
+                    movieMatches.open = options.length > 0;
                     setMovieSearchStatus(options.length ? options.length + ' movies found.' : 'No matching movies found.');
                 } catch {
                     if (revision === movieSearchRevision) setMovieSearchStatus('Movie search failed. Please try again.');
