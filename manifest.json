@@ -9,6 +9,14 @@
         "imageUrl": "https://raw.githubusercontent.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/main/images/AudioAdjuster4Jellyfin.png",
         "versions": [
             {
+                "version": "1.1.0.0",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/releases/download/v1.1.0/audioadjuster4jellyfin_1.1.0.zip",
+                "checksum": "feac9fee111d4c859e8a16c12b4de80e",
+                "timestamp": "2026-11-17T21:26:15Z",
+                "changelog": "<!-- Release notes generated using configuration in .github/release.yml at main -->\r\n\r\n\r\n\r\n**Full Changelog**: https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/compare/v1.0.0...v1.1.0"
+            },
+            {
                 "version": "1.0.0.0",
                 "targetAbi": "12.0.0.0",
                 "sourceUrl": "https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/releases/download/v1.0.0/audioadjuster4jellyfin_1.0.0.zip",
