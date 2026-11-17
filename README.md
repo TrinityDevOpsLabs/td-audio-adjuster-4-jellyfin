@@ -44,7 +44,7 @@ To restore a backup, wait for any job for that movie to finish, move the adjuste
 
 ## Build and release
 
-Build with the .NET 10 SDK using `dotnet build -c Release`. Release builds target the Jellyfin 12.0 API so servers across the 12.x series can install them. CI also checks the build against Jellyfin 12.4. For local development, copy the built DLL from `bin/Release/net10.0/` into a plugin subfolder and restart Jellyfin.
+Build with the .NET 10 SDK using `dotnet build -c Release`. Release builds target the Jellyfin 12.0 API so servers across the 12.x series can install them. CI uses the same API target. For local development, copy the built DLL from `bin/Release/net10.0/` into a plugin subfolder and restart Jellyfin.
 
 Set the project `Version` and push the release commit. In GitHub Releases, create a release with a matching tag such as `v1.0.0`, select the release commit as the tag target, and publish. GitHub Actions builds and attaches the plugin ZIP if it is missing, then uses it to update `manifest.json` on the default branch. If the repository uses immutable releases, push the tag first so the workflow can attach the ZIP to a draft before you publish.
 
