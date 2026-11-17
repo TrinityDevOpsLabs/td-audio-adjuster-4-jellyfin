@@ -1,6 +1,12 @@
 <div id="AudioAdjusterConfig" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-select,emby-checkbox">
     <div data-role="content">
         <div class="content-primary">
+            <div id="audioInjectorWarning" role="alert" hidden style="background-color: #8b1d24; color: #fff; padding: 1em; margin-bottom: 1em; border-radius: 4px;">
+                <strong id="audioInjectorStatus"></strong>
+                The Adjust Audio button on movie pages requires an active JavaScript Injector and an enabled script.
+                You can still queue movies from this page.
+                <a href="https://github.com/n00bcodr/Jellyfin-JavaScript-Injector" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">JavaScript Injector setup</a>
+            </div>
             <form id="AudioAdjusterForm">
                 <fieldset class="verticalSection">
                     <legend><h2>Movie Audio</h2></legend>
@@ -61,6 +67,7 @@
             const page = document.getElementById('AudioAdjusterConfig');
             const find = id => page.querySelector('#' + id);
             const pluginId = '175273b8-46b1-4059-97f7-31931b194342';
+            const injectorId = 'f5a34f7b-2e8a-4e6a-a722-3a216a81b374';
             const form = find('AudioAdjusterForm');
             const status = find('audioStatus');
             const fields = {
@@ -96,8 +103,28 @@
                 }));
             }
 
+            async function checkInjector() {
+                const warning = find('audioInjectorWarning');
+                warning.hidden = true;
+                try {
+                    const plugins = await ApiClient.ajax({
+                        type: 'GET', url: ApiClient.getUrl('Plugins'), dataType: 'json'
+                    });
+                    const injectors = plugins.filter(plugin => plugin.Id?.toLowerCase() === injectorId);
+                    if (injectors.some(plugin => plugin.Status === 'Active')) return;
+
+                    find('audioInjectorStatus').textContent = injectors.length
+                        ? 'JavaScript Injector is inactive.'
+                        : 'JavaScript Injector is not installed.';
+                } catch {
+                    find('audioInjectorStatus').textContent = 'Could not check JavaScript Injector status.';
+                }
+                warning.hidden = false;
+            }
+
             page.addEventListener('pageshow', async () => {
                 loaded = false;
+                void checkInjector();
                 try {
                     const config = await ApiClient.getPluginConfiguration(pluginId);
                     for (const [key, id] of Object.entries(fields)) {
