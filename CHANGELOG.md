@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2
+
+- Fix the configuration warning so it clears when JavaScript Injector is active.
+
 ## 1.0.1
 
 - Open the movie picker automatically when search results arrive.
