@@ -9,6 +9,14 @@
         "imageUrl": "https://raw.githubusercontent.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/main/images/AudioAdjuster4Jellyfin.png",
         "versions": [
             {
+                "version": "1.0.1.0",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/releases/download/v1.0.1/audioadjuster4jellyfin_1.0.1.zip",
+                "checksum": "6d339e45b974c4a982450f9078c3da2e",
+                "timestamp": "2026-11-17T22:53:59Z",
+                "changelog": "## Changes\n\n### Fixed\n\n- fix: auto-open movie results and improve contrast ([b574ffa](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/b574ffac515a3ef3a493052f3e2c3bd3be44d1e2))\n\n### Other changes\n\n- chore: index AudioAdjuster4Jellyfin v1.0.0 ([87adf41](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/87adf41703ef57532d9656f536e22c0d42017cd2))\n- chore\\(release\\): prepare v1.0.1 ([22f3c50](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/22f3c5029232cb0096d2a014f4cba8ba20a0969f))\n- ci: limit push-triggered builds to main ([2a1cdf8](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/2a1cdf892e4fc465b7bd9a79b0f1763d54ac772c))\n- Merge pull request #3 from TrinityDevOpsLabs/fix/movie-picker-display ([5207b93](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/5207b9358508b167cd13eb7a8fc52346cacd4e0f))\n\n**Full Changelog:** https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/compare/v1.0.0...v1.0.1\n"
+            },
+            {
                 "version": "1.0.0.0",
                 "targetAbi": "12.0.0.0",
                 "sourceUrl": "https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/releases/download/v1.0.0/audioadjuster4jellyfin_1.0.0.zip",
