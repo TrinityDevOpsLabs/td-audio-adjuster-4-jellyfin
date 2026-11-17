@@ -9,7 +9,7 @@ The plugin currently supports movies only. TV episodes and other media types are
 Requires Jellyfin Server 12.x and a published AudioAdjuster4Jellyfin release. The plugin catalog uses 12.0 as the minimum server version. The plugin checks the server's major version when it loads.
 
 1. Open **Dashboard → Plugins → Repositories** and add a repository named **AudioAdjuster4Jellyfin**.
-2. Use the public repository's raw manifest URL. For `Awatatah/AudioAdjuster4Jellyfin` on `main`, the URL is `https://raw.githubusercontent.com/Awatatah/AudioAdjuster4Jellyfin/main/manifest.json`.
+2. Use the raw manifest URL for `TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin` on `main`: `https://raw.githubusercontent.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/main/manifest.json`.
 3. Open **Catalog**, select **AudioAdjuster4Jellyfin**, and install. Restart Jellyfin when prompted.
 
 ### Configure the plugin and movie button
