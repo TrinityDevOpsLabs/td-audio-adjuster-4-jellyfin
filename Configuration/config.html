@@ -19,6 +19,13 @@
             background: rgba(127, 127, 127, 0.2);
         }
 
+        #audioMovieSelection[data-selected] {
+            border: 1px solid currentColor;
+            border-radius: 4px;
+            padding: 0.65em;
+            background: rgba(127, 127, 127, 0.12);
+        }
+
         #audioMovieResult .audioMovieOption:focus-visible {
             outline: 2px solid currentColor;
             outline-offset: -2px;
@@ -89,7 +96,14 @@
                         <div id="audioMovieResult" style="max-height: 16em; overflow-y: auto;"></div>
                     </details>
                     <p id="audioMovieSearchStatus" role="status" hidden></p>
-                    <button is="emby-button" class="raised" type="submit">Adjust this movie</button>
+                    <div id="audioAdjustAction">
+                        <button is="emby-button" class="raised" type="submit" id="audioAdjust">Adjust this movie</button>
+                    </div>
+                    <div id="audioAdjustConfirmation" role="group" aria-labelledby="audioAdjustPrompt" hidden>
+                        <p id="audioAdjustPrompt"></p>
+                        <button is="emby-button" class="raised button-submit" type="button" id="audioConfirmAdjust">Confirm adjustment</button>
+                        <button is="emby-button" class="raised" type="button" id="audioCancelAdjust">Cancel</button>
+                    </div>
                 </form>
                 <p id="audioStatus" role="status"></p>
             </section>
@@ -116,6 +130,8 @@
             const movieMatches = find('audioMovieMatches');
             const movieSelection = find('audioMovieSelection');
             const movieSearchStatus = find('audioMovieSearchStatus');
+            const adjustButton = find('audioAdjust');
+            const confirmButton = find('audioConfirmAdjust');
             const movieIdPattern = /^(?:[a-f\d]{32}|[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12})$/i;
             const fields = {
                 Mode: 'audioMode',
@@ -128,7 +144,14 @@
             let loaded = false;
             let movieSearchTimer;
             let movieSearchRevision = 0;
-            let selectedMovieId = '';
+            let selectedMovie;
+            let pendingMovieId = '';
+
+            function closeConfirmation() {
+                pendingMovieId = '';
+                find('audioAdjustConfirmation').hidden = true;
+                find('audioAdjustAction').hidden = false;
+            }
 
             function directMovieId(value) {
                 const id = value.includes('?') ? new URLSearchParams(value.split('?').at(-1)).get('id') : value;
@@ -184,9 +207,15 @@
                             option.append(metadata);
                         }
                         option.addEventListener('click', () => {
-                            selectedMovieId = movie.Id;
-                            movieSelection.replaceChildren(...Array.from(option.childNodes, node => node.cloneNode(true)));
+                            closeConfirmation();
+                            selectedMovie = { id: movie.Id, label: option.textContent };
+                            const selectedLabel = document.createElement('strong');
+                            selectedLabel.textContent = 'Selected movie: ';
+                            movieSelection.replaceChildren(selectedLabel, ...Array.from(option.childNodes, node => node.cloneNode(true)));
+                            movieSelection.setAttribute('data-selected', '');
                             movieMatches.open = false;
+                            setMovieSearchStatus('');
+                            status.textContent = '';
                             movieSelection.focus();
                         });
                         return option;
@@ -295,10 +324,12 @@
                 clearTimeout(movieSearchTimer);
                 const revision = ++movieSearchRevision;
                 const query = movieInput.value.trim();
-                selectedMovieId = '';
+                selectedMovie = undefined;
+                closeConfirmation();
                 movieMatches.hidden = true;
                 movieMatches.open = false;
                 movieSelection.textContent = 'Select a matching movie';
+                movieSelection.removeAttribute('data-selected');
                 movieResult.replaceChildren();
                 setMovieSearchStatus('');
                 if (query.length < 3 || directMovieId(query)) return;
@@ -307,19 +338,45 @@
                 movieSearchTimer = setTimeout(() => searchMovies(query, revision), 300);
             });
 
-            find('AudioAdjusterSubmit').addEventListener('submit', async event => {
+            find('AudioAdjusterSubmit').addEventListener('submit', event => {
                 event.preventDefault();
-                const id = directMovieId(movieInput.value.trim()) || selectedMovieId;
+                if (pendingMovieId || adjustButton.disabled) return;
+
+                const id = directMovieId(movieInput.value.trim()) || selectedMovie?.id;
                 if (!id) {
                     status.textContent = 'Select a matching movie or enter a Jellyfin movie details URL or item ID.';
                     return;
                 }
-                if (!window.confirm('Adjust this movie using your saved sound settings?')) return;
+                pendingMovieId = id;
+                const label = selectedMovie?.label || 'the movie from the link or ID you entered';
+                find('audioAdjustPrompt').textContent = 'Apply your saved sound settings to ' + label + '?';
+                status.textContent = '';
+                find('audioAdjustAction').hidden = true;
+                find('audioAdjustConfirmation').hidden = false;
+                confirmButton.focus();
+            });
+
+            find('audioCancelAdjust').addEventListener('click', () => {
+                closeConfirmation();
+                adjustButton.focus();
+            });
+
+            confirmButton.addEventListener('click', async () => {
+                const id = pendingMovieId;
+                if (!id || adjustButton.disabled) return;
+
+                closeConfirmation();
+                adjustButton.disabled = true;
+                status.textContent = 'Submitting adjustment…';
                 try {
                     await ApiClient.ajax({ type: 'POST', url: ApiClient.getUrl('AudioAdjuster/movies/' + id) });
                     status.textContent = 'Movie added. Check Adjustment progress below.';
                     await refresh().catch(error => displayError(error, progressStatus));
                 } catch (error) { await displayError(error, status); }
+                finally {
+                    adjustButton.disabled = false;
+                    if (document.activeElement === document.body) adjustButton.focus();
+                }
             });
         })();
     </script>
