@@ -41,11 +41,6 @@ jobs:
             exit 1
           fi
           version=${RELEASE_TAG#v}
-          project_version=$(dotnet msbuild AudioAdjuster4Jellyfin.csproj -nologo -getProperty:Version)
-          if [[ "$project_version" != "$version" ]]; then
-            echo "::error::Release tag '$RELEASE_TAG' does not match project version '$project_version'. Tag a commit with a matching Version in AudioAdjuster4Jellyfin.csproj."
-            exit 1
-          fi
           asset="audioadjuster4jellyfin_${version}.zip"
           release="$RUNNER_TEMP/package-release.json"
           if [[ "$GITHUB_EVENT_NAME" == push ]]; then
@@ -57,7 +52,7 @@ jobs:
             exit 0
           fi
 
-          dotnet build --configuration Release
+          dotnet build --configuration Release -p:Version="$version"
           archive="$RUNNER_TEMP/$asset"
           zip -j "$archive" bin/Release/net10.0/AudioAdjuster4Jellyfin.dll LICENSE NOTICE
           if [[ -f "$release" ]]; then

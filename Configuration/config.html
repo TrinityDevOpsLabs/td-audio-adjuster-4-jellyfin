@@ -106,7 +106,7 @@
             const page = document.getElementById('AudioAdjusterConfig');
             const find = id => page.querySelector('#' + id);
             const pluginId = '175273b8-46b1-4059-97f7-31931b194342';
-            const injectorId = 'f5a34f7b-2e8a-4e6a-a722-3a216a81b374';
+            const injectorId = 'f5a34f7b2e8a4e6aa7223a216a81b374';
             const form = find('AudioAdjusterForm');
             const status = find('audioStatus');
             const settingsStatus = find('audioSettingsStatus');
@@ -246,7 +246,7 @@
                     const plugins = await ApiClient.ajax({
                         type: 'GET', url: ApiClient.getUrl('Plugins'), dataType: 'json'
                     });
-                    const injectors = plugins.filter(plugin => plugin.Id?.toLowerCase() === injectorId);
+                    const injectors = plugins.filter(plugin => plugin.Id?.replaceAll('-', '').toLowerCase() === injectorId);
                     if (injectors.some(plugin => plugin.Status === 'Active')) return;
 
                     find('audioInjectorStatus').textContent = injectors.length
