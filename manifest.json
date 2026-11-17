@@ -9,6 +9,14 @@
         "imageUrl": "https://raw.githubusercontent.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/main/images/AudioAdjuster4Jellyfin.png",
         "versions": [
             {
+                "version": "1.0.2.0",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/releases/download/v1.0.2/audioadjuster4jellyfin_1.0.2.zip",
+                "checksum": "3d415a145ba4626a0f170e70ce45f3dc",
+                "timestamp": "2026-11-17T23:14:45Z",
+                "changelog": "## Changes\n\n### Fixed\n\n- fix: recognize installed JavaScript Injector for v1.0.2 ([ab49107](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/ab49107971977e763cad6a807853844ed55de3ff))\n\n### Other changes\n\n- chore: index AudioAdjuster4Jellyfin v1.0.1 ([26d7691](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/26d7691754d0757033051bd09cc77ce37178a12e))\n- ci: derive plugin versions from release tags ([e8324e9](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/e8324e951c43d37ebeb1bd96af9a26b023e3b5e8))\n- Merge branch 'main' into fix/injector-banner ([fdfa95b](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/fdfa95b3835c577734bd557a898570846d76227b))\n- Merge pull request #4 from TrinityDevOpsLabs/fix/injector-banner ([151f932](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/151f9325f3ffb0aa612f4f3dccdb609445c12088))\n\n**Full Changelog:** https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/compare/v1.0.1...v1.0.2\n"
+            },
+            {
                 "version": "1.0.1.0",
                 "targetAbi": "12.0.0.0",
                 "sourceUrl": "https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/releases/download/v1.0.1/audioadjuster4jellyfin_1.0.1.zip",
