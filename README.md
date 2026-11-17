@@ -14,10 +14,10 @@ Requires Jellyfin Server 12.x and a published AudioAdjuster4Jellyfin release. Th
 
 ### Configure the plugin and movie button
 
-1. Open **Dashboard → Plugins → Audio Adjuster**, choose your settings, and save.
+1. Open **Dashboard → Plugins → AudioAdjuster4Jellyfin**, choose your settings, and save.
 2. For the **Adjust Audio** button on movie details pages, install [JavaScript Injector](https://github.com/n00bcodr/Jellyfin-JavaScript-Injector) and add an enabled script with a **Script URL** of `/AudioAdjuster/movie-button.js`. If Jellyfin uses a base URL such as `/jellyfin`, use `/jellyfin/AudioAdjuster/movie-button.js`. Reload Jellyfin Web.
 
-You can also queue a movie from the Audio Adjuster dashboard by pasting its details URL or item ID. Use the dashboard's **Refresh jobs** button for status. The queue and recent job history are held in memory and reset when Jellyfin restarts.
+Under **Adjust a movie**, type at least three characters of a movie title and select from up to 10 matches across the libraries your account can access. Each match shows the release year and library name when available. You can also paste a movie details URL or item ID. Use **Refresh progress** to see which movies are waiting, in progress, or finished. The queue and recent job history are held in memory and reset when Jellyfin restarts.
 
 ## Choose what changes
 
@@ -44,11 +44,11 @@ To restore a backup, wait for any job for that movie to finish, move the adjuste
 
 ## Build and release
 
-Build with the .NET 10 SDK using `dotnet build -c Release`. Release builds target the Jellyfin 12.0 API so servers across the 12.x series can install them. CI also checks the build against Jellyfin 12.4. For local development, copy the built DLL from `bin/Release/net10.0/` into a plugin subfolder and restart Jellyfin.
+Build with the .NET 10 SDK using `dotnet build -c Release`. Release builds target the Jellyfin 12.0 API so servers across the 12.x series can install them. CI uses the same API target. For local development, copy the built DLL from `bin/Release/net10.0/` into a plugin subfolder and restart Jellyfin.
 
 Set the project `Version` and push the release commit. In GitHub Releases, create a release with a matching tag such as `v1.0.0`, select the release commit as the tag target, and publish. GitHub Actions builds and attaches the plugin ZIP if it is missing, then uses it to update `manifest.json` on the default branch. If the repository uses immutable releases, push the tag first so the workflow can attach the ZIP to a draft before you publish.
 
-To retry a published release, run **Package release and update Jellyfin catalog** manually with its tag. The workflow token needs write access to the release and default branch.
+The workflow replaces the GitHub release description with notes generated from the tagged commits and uses those same notes in the Jellyfin catalog. To retry a published release, run **Package release and update Jellyfin catalog** manually with its tag. The workflow token needs write access to the release and default branch.
 
 ## License
 

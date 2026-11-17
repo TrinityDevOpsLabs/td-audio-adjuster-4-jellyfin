@@ -4,61 +4,75 @@
             <div id="audioInjectorWarning" role="alert" hidden style="background-color: #8b1d24; color: #fff; padding: 1em; margin-bottom: 1em; border-radius: 4px;">
                 <strong id="audioInjectorStatus"></strong>
                 The Adjust Audio button on movie pages requires an active JavaScript Injector and an enabled script.
-                You can still queue movies from this page.
+                You can still adjust movies from this page.
                 <a href="https://github.com/n00bcodr/Jellyfin-JavaScript-Injector" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">JavaScript Injector setup</a>
             </div>
             <form id="AudioAdjusterForm">
                 <fieldset class="verticalSection">
-                    <legend><h2>Movie Audio</h2></legend>
+                    <legend><h2>Movie sound settings</h2></legend>
                     <div class="selectContainer">
-                        <label class="selectLabel" for="audioMode">Adjustment method</label>
-                        <select is="emby-select" id="audioMode">
-                            <option value="Percentage">Percentage of original volume</option>
-                            <option value="Decibels">Decibel reduction</option>
-                            <option value="Normalize">Normalize to a target loudness</option>
+                        <label class="selectLabel" for="audioMode">How should the volume change?</label>
+                        <select is="emby-select" id="audioMode" aria-describedby="audioModeHint">
+                            <option value="Percentage">Turn it down by a percentage</option>
+                            <option value="Decibels">Turn it down by a fixed amount (dB)</option>
+                            <option value="Normalize">Match a loudness target</option>
                         </select>
+                        <div class="fieldDescription" id="audioModeHint">These settings apply to the first audio track. Choose a percentage or a fixed amount to make it quieter, or use a target to make quiet movies louder and loud movies quieter.</div>
                     </div>
                     <div class="inputContainer" data-mode="Percentage">
-                        <label class="inputLabel" for="audioPercentage">Volume kept (% of original)</label>
-                        <input is="emby-input" type="number" id="audioPercentage" min="50" max="90" step="1" required />
-                        <div class="fieldDescription">50–90%. Default is 80%, or about −1.94 dB.</div>
+                        <label class="inputLabel" for="audioPercentage">Original volume to keep (%)</label>
+                        <input is="emby-input" type="number" id="audioPercentage" aria-describedby="audioPercentageHint" min="50" max="90" step="1" required />
+                        <div class="fieldDescription" id="audioPercentageHint">For example, 80% keeps four-fifths of the original audio level. Choose 50% to 90%.</div>
                     </div>
                     <div class="inputContainer" data-mode="Decibels" hidden>
-                        <label class="inputLabel" for="audioGain">Volume adjustment (dB)</label>
-                        <input is="emby-input" type="number" id="audioGain" min="-6" max="-1" step="0.1" required />
-                        <div class="fieldDescription">−6 to −1 dB. Default is −2 dB.</div>
+                        <label class="inputLabel" for="audioGain">Volume change (dB)</label>
+                        <input is="emby-input" type="number" id="audioGain" aria-describedby="audioGainHint" min="-6" max="-1" step="0.1" required />
+                        <div class="fieldDescription" id="audioGainHint">Choose −6 to −1 decibels. −6 turns the sound down more than −1. The default is −2.</div>
                     </div>
                     <div class="inputContainer" data-mode="Normalize" hidden>
                         <label class="inputLabel" for="audioTarget">Target loudness (LUFS)</label>
-                        <input is="emby-input" type="number" id="audioTarget" min="-30" max="-14" step="0.1" required />
-                        <div class="fieldDescription">−30 to −14 LUFS. Default is −23 LUFS. Quiet tracks can become louder.</div>
+                        <input is="emby-input" type="number" id="audioTarget" aria-describedby="audioTargetHint" min="-30" max="-14" step="0.1" required />
+                        <div class="fieldDescription" id="audioTargetHint">LUFS measures how loud the audio sounds overall. Choose −30 (quieter) to −14 (louder). The default is −23. A quiet track can get louder to reach your target.</div>
                     </div>
                     <div class="selectContainer">
-                        <label class="selectLabel" for="audioOutput">Adjusted audio track</label>
-                        <select is="emby-select" id="audioOutput">
+                        <label class="selectLabel" for="audioOutput">What should happen to the audio track?</label>
+                        <select is="emby-select" id="audioOutput" aria-describedby="audioOutputHint">
                             <option value="Replace">Replace the first audio track</option>
-                            <option value="Append">Add a selectable adjusted track</option>
+                            <option value="Append">Keep the original and add an adjusted track</option>
                         </select>
+                        <div class="fieldDescription" id="audioOutputHint">Replace the first track to use the adjusted sound by default. Add a track to choose between the original and adjusted sound in Jellyfin’s audio menu.</div>
                     </div>
                     <div class="checkboxContainer checkboxContainer-withDescription">
-                        <label><input is="emby-checkbox" type="checkbox" id="audioBackup" /><span>Keep a backup of the movie file</span></label>
-                        <div class="fieldDescription">Saves a full copy before the first adjustment. Existing backups are used for future adjustments.</div>
+                        <label><input is="emby-checkbox" type="checkbox" id="audioBackup" aria-describedby="audioBackupHint" /><span>Keep a backup of the movie file</span></label>
+                        <div class="fieldDescription" id="audioBackupHint">Keep a full copy so you can restore the original movie later. This takes extra disk space. If a backup exists, new adjustments start from that copy.</div>
                     </div>
                 </fieldset>
                 <button is="emby-button" type="submit" class="raised button-submit block">Save settings</button>
+                <p id="audioSettingsStatus" role="status"></p>
             </form>
             <section class="verticalSection">
-                <h2>Audio jobs</h2>
+                <h2>Adjust a movie</h2>
+                <p>Choose a movie to apply your saved sound settings. Once the adjustment finishes, the updated sound is available for future playback.</p>
                 <form id="AudioAdjusterSubmit">
                     <div class="inputContainer">
-                        <label class="inputLabel" for="audioMovie">Movie details URL or item ID</label>
-                        <input is="emby-input" id="audioMovie" required />
+                        <label class="inputLabel" for="audioMovie">Find a movie</label>
+                        <input is="emby-input" id="audioMovie" aria-describedby="audioMovieHint" autocomplete="off" required />
+                        <div class="fieldDescription" id="audioMovieHint">Type at least 3 characters of a title, or paste a Jellyfin movie link or item ID.</div>
                     </div>
-                    <button is="emby-button" class="raised" type="submit">Queue audio adjustment</button>
+                    <details id="audioMovieMatches" hidden style="margin-bottom: 1em;">
+                        <summary id="audioMovieSelection" style="cursor: pointer;">Select a matching movie</summary>
+                        <div id="audioMovieResult" style="max-height: 16em; overflow-y: auto;"></div>
+                    </details>
+                    <p id="audioMovieSearchStatus" role="status" hidden></p>
+                    <button is="emby-button" class="raised" type="submit">Adjust this movie</button>
                 </form>
-                <button is="emby-button" class="raised" type="button" id="audioRefresh">Refresh jobs</button>
                 <p id="audioStatus" role="status"></p>
-                <ul id="audioJobs"></ul>
+            </section>
+            <section class="verticalSection" aria-labelledby="audioProgressHeading">
+                <h2 id="audioProgressHeading">Adjustment progress</h2>
+                <p id="audioProgressStatus" role="status"></p>
+                <ul id="audioJobs" aria-label="Recent movie adjustments" style="list-style: none; padding: 0;"></ul>
+                <button is="emby-button" class="raised" type="button" id="audioRefresh">Refresh progress</button>
             </section>
         </div>
     </div>
@@ -70,6 +84,14 @@
             const injectorId = 'f5a34f7b-2e8a-4e6a-a722-3a216a81b374';
             const form = find('AudioAdjusterForm');
             const status = find('audioStatus');
+            const settingsStatus = find('audioSettingsStatus');
+            const progressStatus = find('audioProgressStatus');
+            const movieInput = find('audioMovie');
+            const movieResult = find('audioMovieResult');
+            const movieMatches = find('audioMovieMatches');
+            const movieSelection = find('audioMovieSelection');
+            const movieSearchStatus = find('audioMovieSearchStatus');
+            const movieIdPattern = /^(?:[a-f\d]{32}|[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12})$/i;
             const fields = {
                 Mode: 'audioMode',
                 VolumePercent: 'audioPercentage',
@@ -79,6 +101,81 @@
                 KeepBackup: 'audioBackup'
             };
             let loaded = false;
+            let movieSearchTimer;
+            let movieSearchRevision = 0;
+            let selectedMovieId = '';
+
+            function directMovieId(value) {
+                const id = value.includes('?') ? new URLSearchParams(value.split('?').at(-1)).get('id') : value;
+                return movieIdPattern.test(id || '') ? id : '';
+            }
+
+            function setMovieSearchStatus(message) {
+                movieSearchStatus.textContent = message;
+                movieSearchStatus.hidden = !message;
+            }
+
+            async function searchMovies(query, revision) {
+                try {
+                    const result = await ApiClient.ajax({
+                        type: 'GET',
+                        url: ApiClient.getUrl('Items', {
+                            UserId: ApiClient.getCurrentUserId(),
+                            SearchTerm: query,
+                            IncludeItemTypes: 'Movie',
+                            Recursive: true,
+                            IsPlaceHolder: false,
+                            Limit: 10,
+                            EnableTotalRecordCount: false
+                        }),
+                        dataType: 'json'
+                    });
+                    if (revision !== movieSearchRevision) return;
+
+                    const movies = result.Items;
+                    let libraries = {};
+                    if (movies.length) {
+                        libraries = await ApiClient.ajax({
+                            type: 'POST',
+                            url: ApiClient.getUrl('AudioAdjuster/movies/libraries'),
+                            contentType: 'application/json',
+                            dataType: 'json',
+                            data: JSON.stringify(movies.map(movie => movie.Id))
+                        }).catch(() => ({}));
+                    }
+                    if (revision !== movieSearchRevision) return;
+
+                    const options = movies.map(movie => {
+                        const names = libraries[movie.Id.replaceAll('-', '').toLowerCase()] || [];
+                        const details = [movie.ProductionYear, ...names].filter(Boolean).join(' · ');
+                        const option = document.createElement('button');
+                        option.type = 'button';
+                        option.setAttribute('is', 'emby-button');
+                        option.className = 'emby-button block';
+                        option.style.textAlign = 'start';
+                        option.style.textTransform = 'none';
+                        option.textContent = movie.Name;
+                        if (details) {
+                            const metadata = document.createElement('span');
+                            metadata.style.opacity = '0.72';
+                            metadata.textContent = ' (' + details + ')';
+                            option.append(metadata);
+                        }
+                        option.addEventListener('click', () => {
+                            selectedMovieId = movie.Id;
+                            movieSelection.replaceChildren(...Array.from(option.childNodes, node => node.cloneNode(true)));
+                            movieMatches.open = false;
+                            movieSelection.focus();
+                        });
+                        return option;
+                    });
+                    movieResult.replaceChildren(...options);
+                    movieMatches.hidden = options.length === 0;
+                    setMovieSearchStatus(options.length ? options.length + ' movies found.' : 'No matching movies found.');
+                } catch {
+                    if (revision === movieSearchRevision) setMovieSearchStatus('Movie search failed. Please try again.');
+                }
+            }
 
             function showMode() {
                 for (const row of page.querySelectorAll('[data-mode]')) {
@@ -87,20 +184,36 @@
                 }
             }
 
-            async function displayError(error) {
+            async function displayError(error, messageArea) {
                 const body = error instanceof Response ? await error.json().catch(() => null) : null;
-                status.textContent = body?.Message || body?.message || 'Request failed. Check the Jellyfin server log.';
+                messageArea.textContent = body?.Message || body?.message || 'Request failed. Check the Jellyfin server log.';
             }
 
             async function refresh() {
                 const jobs = await ApiClient.ajax({
                     type: 'GET', url: ApiClient.getUrl('AudioAdjuster/jobs'), dataType: 'json'
                 });
+                const labels = { Queued: 'Waiting', Running: 'Adjusting audio', Completed: 'Finished', Failed: 'Could not finish', Stopped: 'Stopped' };
                 find('audioJobs').replaceChildren(...jobs.map(job => {
                     const entry = document.createElement('li');
-                    entry.textContent = job.Name + ' — ' + job.State + (job.Message ? ' — ' + job.Message : '');
+                    entry.style.padding = '0.65em 0';
+                    entry.style.borderBottom = '1px solid rgba(127, 127, 127, 0.35)';
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25em 1em;';
+                    const title = document.createElement('strong');
+                    title.textContent = job.Name;
+                    const state = document.createElement('span');
+                    state.textContent = labels[job.State] || job.State;
+                    row.append(title, state);
+                    entry.append(row);
+                    if (job.Message) {
+                        const message = document.createElement('div');
+                        message.textContent = job.Message;
+                        entry.append(message);
+                    }
                     return entry;
                 }));
+                progressStatus.textContent = jobs.length ? '' : 'No recent adjustments.';
             }
 
             async function checkInjector() {
@@ -134,12 +247,12 @@
                     }
                     showMode();
                     loaded = true;
-                    await refresh();
-                } catch (error) { await displayError(error); }
+                } catch (error) { await displayError(error, settingsStatus); }
+                await refresh().catch(error => displayError(error, progressStatus));
             });
 
             find('audioMode').addEventListener('change', showMode);
-            find('audioRefresh').addEventListener('click', () => refresh().catch(displayError));
+            find('audioRefresh').addEventListener('click', () => refresh().catch(error => displayError(error, progressStatus)));
             form.addEventListener('submit', async event => {
                 event.preventDefault();
                 if (!loaded) return;
@@ -151,24 +264,39 @@
                 }
                 try {
                     await ApiClient.updatePluginConfiguration(pluginId, config);
-                    status.textContent = 'Settings saved.';
-                } catch (error) { await displayError(error); }
+                    settingsStatus.textContent = 'Settings saved.';
+                } catch (error) { await displayError(error, settingsStatus); }
+            });
+
+            movieInput.addEventListener('input', () => {
+                clearTimeout(movieSearchTimer);
+                const revision = ++movieSearchRevision;
+                const query = movieInput.value.trim();
+                selectedMovieId = '';
+                movieMatches.hidden = true;
+                movieMatches.open = false;
+                movieSelection.textContent = 'Select a matching movie';
+                movieResult.replaceChildren();
+                setMovieSearchStatus('');
+                if (query.length < 3 || directMovieId(query)) return;
+
+                setMovieSearchStatus('Searching for movies…');
+                movieSearchTimer = setTimeout(() => searchMovies(query, revision), 300);
             });
 
             find('AudioAdjusterSubmit').addEventListener('submit', async event => {
                 event.preventDefault();
-                const value = find('audioMovie').value.trim();
-                const id = value.includes('?') ? new URLSearchParams(value.split('?').at(-1)).get('id') : value;
-                if (!/^(?:[a-f\d]{32}|[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12})$/i.test(id || '')) {
-                    status.textContent = 'Enter a Jellyfin movie details URL or a valid item ID.';
+                const id = directMovieId(movieInput.value.trim()) || selectedMovieId;
+                if (!id) {
+                    status.textContent = 'Select a matching movie or enter a Jellyfin movie details URL or item ID.';
                     return;
                 }
-                if (!window.confirm('Queue this movie using the saved audio settings?')) return;
+                if (!window.confirm('Adjust this movie using your saved sound settings?')) return;
                 try {
                     await ApiClient.ajax({ type: 'POST', url: ApiClient.getUrl('AudioAdjuster/movies/' + id) });
-                    status.textContent = 'Movie queued.';
-                    await refresh();
-                } catch (error) { await displayError(error); }
+                    status.textContent = 'Movie added. Check Adjustment progress below.';
+                    await refresh().catch(error => displayError(error, progressStatus));
+                } catch (error) { await displayError(error, status); }
             });
         })();
     </script>

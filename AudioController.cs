@@ -20,6 +20,28 @@ public sealed class AudioController(ILibraryManager library, AudioQueue queue) :
     [HttpGet("jobs")]
     public IActionResult Jobs() => Ok(queue.GetJobs());
 
+    [HttpPost("movies/libraries")]
+    public IActionResult MovieLibraries([FromBody] Guid[] ids)
+    {
+        if (ids.Length > 10)
+            return BadRequest();
+
+        var libraries = new Dictionary<string, string[]>();
+        foreach (var id in ids)
+        {
+            if (library.GetItemById(id) is not Movie movie)
+                continue;
+
+            libraries[id.ToString("N")] = library.GetCollectionFolders(movie)
+                .Select(folder => folder.Name)
+                .Distinct()
+                .OrderBy(name => name)
+                .ToArray();
+        }
+
+        return Ok(libraries);
+    }
+
     [HttpPost("movies/{id:guid}")]
     public IActionResult Submit(Guid id)
     {

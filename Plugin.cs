@@ -31,7 +31,7 @@ public sealed class Plugin : BasePlugin<AudioSettings>, IHasWebPages
         yield return new PluginPageInfo
         {
             Name = Name,
-            DisplayName = "Audio Adjuster",
+            DisplayName = Name,
             EmbeddedResourcePath = "AudioAdjuster4Jellyfin.Configuration.config.html",
             EnableInMainMenu = true,
             MenuSection = "plugins",
