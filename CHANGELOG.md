@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.1.0
+## 1.1.0
+
+- Add a thumbnail to the Jellyfin plugin catalog.
+- Correct the catalog installation URL in the README.
+- Update the CI and release workflows to use Node.js 24 actions.
+
+## 1.0.0
 
 - Queue local MKV and MP4 movies from Jellyfin Web or the plugin dashboard.
 - Adjust the first audio track using percentage, decibels, or loudness normalization.
