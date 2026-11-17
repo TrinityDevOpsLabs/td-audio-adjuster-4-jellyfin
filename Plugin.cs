@@ -10,7 +10,16 @@ namespace AudioAdjuster4Jellyfin;
 
 public sealed class Plugin : BasePlugin<AudioSettings>, IHasWebPages
 {
-    public Plugin(IApplicationPaths paths, IXmlSerializer serializer) : base(paths, serializer) => Instance = this;
+    public Plugin(IApplicationPaths paths, IXmlSerializer serializer, IServerApplicationHost applicationHost)
+        : base(paths, serializer)
+    {
+        if (!SupportsServer(applicationHost))
+            throw new NotSupportedException("AudioAdjuster4Jellyfin requires Jellyfin Server 12.x.");
+
+        Instance = this;
+    }
+
+    internal static bool SupportsServer(IServerApplicationHost applicationHost) => applicationHost.ApplicationVersion.Major == 12;
 
     internal static Plugin Instance { get; private set; } = null!;
     public static readonly Guid PluginId = new("175273b8-46b1-4059-97f7-31931b194342");
@@ -45,6 +54,9 @@ public sealed class ServiceRegistrator : IPluginServiceRegistrator
 {
     public void RegisterServices(IServiceCollection services, IServerApplicationHost applicationHost)
     {
+        if (!Plugin.SupportsServer(applicationHost))
+            return;
+
         services.AddSingleton<AudioQueue>();
         services.AddHostedService(provider => provider.GetRequiredService<AudioQueue>());
     }

@@ -6,7 +6,7 @@ The plugin currently supports movies only. TV episodes and other media types are
 
 ## Install from Jellyfin's plugin catalog
 
-Requires Jellyfin Server 12.0 or later and a published AudioAdjuster4Jellyfin release.
+Requires Jellyfin Server 12.x and a published AudioAdjuster4Jellyfin release. The plugin catalog uses 12.0 as the minimum server version. The plugin checks the server's major version when it loads.
 
 1. Open **Dashboard → Plugins → Repositories** and add a repository named **AudioAdjuster4Jellyfin**.
 2. Use the public repository's raw manifest URL. For `Awatatah/AudioAdjuster4Jellyfin` on `main`, the URL is `https://raw.githubusercontent.com/Awatatah/AudioAdjuster4Jellyfin/main/manifest.json`.
@@ -44,7 +44,7 @@ To restore a backup, wait for any job for that movie to finish, move the adjuste
 
 ## Build and release
 
-Build with the .NET 10 SDK using `dotnet build -c Release`. To build against a different Jellyfin 12.x API version, pass a property such as `-p:JellyfinVersion=12.4.0`. For local development, copy the built DLL from `bin/Release/net10.0/` into a plugin subfolder and restart Jellyfin.
+Build with the .NET 10 SDK using `dotnet build -c Release`. Release builds target the Jellyfin 12.0 API so servers across the 12.x series can install them. CI also checks the build against Jellyfin 12.4. For local development, copy the built DLL from `bin/Release/net10.0/` into a plugin subfolder and restart Jellyfin.
 
 Set the project `Version`, then push a matching stable tag such as `v0.1.0`. GitHub Actions builds the ZIP and attaches it to a draft release. Publish the draft to trigger the catalog update. The workflow computes the checksum from the published ZIP and updates `manifest.json` on the default branch. If needed, rerun **Package release and update Jellyfin catalog** manually with the published tag. The workflow token needs write access to the default branch for the manifest commit.
 
