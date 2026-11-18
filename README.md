@@ -14,8 +14,14 @@ Requires Jellyfin Server 12.x and a published AudioAdjuster4Jellyfin release. Th
 
 ### Configure the plugin and movie button
 
-1. Open **Dashboard → Plugins → AudioAdjuster4Jellyfin**, choose your settings, and save.
-2. For the **Adjust Audio** button on movie details pages, install [JavaScript Injector](https://github.com/n00bcodr/Jellyfin-JavaScript-Injector) and add an enabled script with a **Script URL** of `/AudioAdjuster/movie-button.js`. If Jellyfin uses a base URL such as `/jellyfin`, use `/jellyfin/AudioAdjuster/movie-button.js`. Reload Jellyfin Web.
+Open **Dashboard → Plugins → AudioAdjuster4Jellyfin**, choose your sound settings, and save. You can adjust movies from this page without any extra plugin.
+
+To show the **Adjust Audio** button on movie details pages, add the script manually after installing the Injector:
+
+1. Install [JavaScript Injector](https://github.com/n00bcodr/Jellyfin-JavaScript-Injector) and restart Jellyfin.
+2. Open **Dashboard → Plugins → JavaScript Injector** and add a script named **AudioAdjuster4Jellyfin**.
+3. Set **Script URL** to `/AudioAdjuster/movie-button.js`. If you access Jellyfin under a base path such as `/jellyfin`, use `/jellyfin/AudioAdjuster/movie-button.js`.
+4. Enable the script, save, and reload Jellyfin Web. Open a movie’s details page while signed in as an administrator to see **Adjust Audio**.
 
 Under **Adjust a movie**, type at least three characters of a movie title and select from up to 10 matches across the libraries your account can access. Each match shows the release year and library name when available. You can also paste a movie details URL or item ID. Use **Refresh progress** to see which movies are waiting, in progress, or finished. The queue and recent job history are held in memory and reset when Jellyfin restarts.
 

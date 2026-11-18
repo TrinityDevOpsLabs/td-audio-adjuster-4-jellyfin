@@ -20,6 +20,10 @@ public sealed class AudioController(ILibraryManager library, AudioQueue queue) :
     [HttpGet("jobs")]
     public IActionResult Jobs() => Ok(queue.GetJobs());
 
+    [HttpGet("movies/{id:guid}/status")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public IActionResult MovieStatus(Guid id) => Ok(new { IsActive = queue.IsActive(id) });
+
     [HttpPost("movies/libraries")]
     public IActionResult MovieLibraries([FromBody] Guid[] ids)
     {
