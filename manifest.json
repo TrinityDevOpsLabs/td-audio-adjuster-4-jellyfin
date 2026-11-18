@@ -9,6 +9,14 @@
         "imageUrl": "https://raw.githubusercontent.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/main/images/AudioAdjuster4Jellyfin.png",
         "versions": [
             {
+                "version": "1.2.1.0",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/releases/download/v1.2.1/audioadjuster4jellyfin_1.2.1.zip",
+                "checksum": "9e32efe7dae4b8bd9d5410cb5194d747",
+                "timestamp": "2026-11-18T02:21:24Z",
+                "changelog": "## Changes\n\n### Added\n\n- feat: animate the movie audio adjustment button ([afb4927](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/afb4927d9c66faecf758b19405c6bd6e4fb47003))\n\n### Other changes\n\n- chore: index AudioAdjuster4Jellyfin v1.2.0 ([9c81af2](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/9c81af260d0e71ebc4e11b77de989c73143ff64d))\n- Merge pull request #10 from TrinityDevOpsLabs/feat/movie-audio-button-animation ([d4208ec](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/d4208ecc74c31f98fcc7a9b74c95d3732660d8c7))\n\n**Full Changelog:** https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/compare/v1.2.0...v1.2.1\n"
+            },
+            {
                 "version": "1.2.0.0",
                 "targetAbi": "12.0.0.0",
                 "sourceUrl": "https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/releases/download/v1.2.0/audioadjuster4jellyfin_1.2.0.zip",
