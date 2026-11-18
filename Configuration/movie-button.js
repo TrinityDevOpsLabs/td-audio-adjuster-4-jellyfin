@@ -5,12 +5,16 @@
     window.audioAdjusterMovieButton = true;
     const itemIdPattern = /^(?:[a-f\d]{32}|[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12})$/i;
     const buttonLabel = 'Adjust Audio via AudioAdjuster4Jellyfin plugin';
+    const settingsHash = '#/configurationpage?name=AudioAdjuster4Jellyfin';
     const jobStates = new WeakMap();
     let previous;
     let running = false;
 
-    function showJobState(button, active) {
-        button.disabled = active;
+    function showJobState(button, active, pending = false) {
+        const label = active ? 'Audio adjustment in progress. Open plugin settings.' : buttonLabel;
+        button.title = label;
+        button.setAttribute('aria-label', label);
+        button.disabled = pending;
         button.setAttribute('aria-busy', String(active));
     }
 
@@ -35,7 +39,54 @@
         }
     }
 
+    function createAudioIcon() {
+        // Google's Material Symbols Outlined edit_audio glyph. See NOTICE.
+        const svgNamespace = 'http://www.w3.org/2000/svg';
+        const icon = document.createElementNS(svgNamespace, 'svg');
+        icon.setAttribute('viewBox', '0 -960 960 960');
+        icon.setAttribute('width', '1em');
+        icon.setAttribute('height', '1em');
+        icon.setAttribute('fill', 'currentColor');
+        icon.setAttribute('aria-hidden', 'true');
+        const arrows = document.createElementNS(svgNamespace, 'path');
+        arrows.setAttribute('d', 'M240-80 80-240l160-160 57 56-64 64h494l-63-64 56-56 160 160L720-80l-57-56 64-64H233l63 64-56 56Z');
+        icon.append(arrows);
+
+        const bars = [
+            { x: 120, y: -740, height: 120 },
+            { x: 280, y: -840, height: 320 },
+            { x: 440, y: -920, height: 480 },
+            { x: 600, y: -840, height: 320 },
+            { x: 760, y: -740, height: 120 }
+        ];
+        for (const { x, y, height } of bars) {
+            const bar = document.createElementNS(svgNamespace, 'rect');
+            bar.classList.add('audioAdjusterWaveformBar');
+            bar.setAttribute('x', x);
+            bar.setAttribute('y', y);
+            bar.setAttribute('width', 80);
+            bar.setAttribute('height', height);
+            icon.append(bar);
+        }
+        return icon;
+    }
+
+    function updateSidebarIcon() {
+        const settingsRoute = settingsHash.slice(2);
+        const containers = document.querySelectorAll(
+            `a[href$="${settingsRoute}"] .MuiListItemIcon-root`
+        );
+        for (const container of containers) {
+            if (container.querySelector('.audioAdjusterSidebarIcon')) continue;
+
+            const icon = createAudioIcon();
+            icon.classList.add('audioAdjusterSidebarIcon');
+            container.prepend(icon);
+        }
+    }
+
     async function attach() {
+        updateSidebarIcon();
         const route = location.hash || location.pathname + location.search;
         if (!/\/details\?/.test(route) || running) return;
 
@@ -75,52 +126,27 @@
             button.type = 'button';
             button.className = 'emby-button button-flat detailButton audioAdjusterButton';
             button.dataset.item = id;
-            button.title = buttonLabel;
-            button.setAttribute('aria-label', buttonLabel);
 
             const content = document.createElement('div');
             content.className = 'detailButton-content';
-            // Google's Material Symbols Outlined edit_audio glyph. See NOTICE.
-            const svgNamespace = 'http://www.w3.org/2000/svg';
-            const icon = document.createElementNS(svgNamespace, 'svg');
-            icon.setAttribute('class', 'detailButton-icon');
-            icon.setAttribute('viewBox', '0 -960 960 960');
-            icon.setAttribute('width', '1em');
-            icon.setAttribute('height', '1em');
-            icon.setAttribute('fill', 'currentColor');
-            icon.setAttribute('aria-hidden', 'true');
-            const arrows = document.createElementNS(svgNamespace, 'path');
-            arrows.setAttribute('d', 'M240-80 80-240l160-160 57 56-64 64h494l-63-64 56-56 160 160L720-80l-57-56 64-64H233l63 64-56 56Z');
-            icon.append(arrows);
-
-            const bars = [
-                { x: 120, y: -740, height: 120 },
-                { x: 280, y: -840, height: 320 },
-                { x: 440, y: -920, height: 480 },
-                { x: 600, y: -840, height: 320 },
-                { x: 760, y: -740, height: 120 }
-            ];
-            for (const { x, y, height } of bars) {
-                const bar = document.createElementNS(svgNamespace, 'rect');
-                bar.classList.add('audioAdjusterWaveformBar');
-                bar.setAttribute('x', x);
-                bar.setAttribute('y', y);
-                bar.setAttribute('width', 80);
-                bar.setAttribute('height', height);
-                icon.append(bar);
-            }
+            const icon = createAudioIcon();
+            icon.classList.add('detailButton-icon');
             content.append(icon);
             button.append(content);
-            showJobState(button, true);
+            showJobState(button, false, true);
             const state = { initial: true, checking: false, submitting: false, submission: 0, nextCheck: 0 };
             jobStates.set(button, state);
             button.addEventListener('click', async () => {
                 if (button.disabled || state.submitting) return;
                 if (button.dataset.item !== new URLSearchParams((location.hash || location.search).split('?')[1]).get('id')) return;
+                if (button.getAttribute('aria-busy') === 'true') {
+                    location.hash = settingsHash;
+                    return;
+                }
                 if (!window.confirm(`Adjust audio for "${item.Name}" using the saved Audio Adjuster settings?`)) return;
                 state.submission++;
                 state.submitting = true;
-                showJobState(button, true);
+                showJobState(button, false, true);
                 try {
                     await client.ajax({ type: 'POST', url: client.getUrl('AudioAdjuster/movies/' + id) });
                     showJobState(button, true);
@@ -149,6 +175,15 @@
 
     const animationStyles = document.createElement('style');
     animationStyles.textContent = `
+        .audioAdjusterSidebarIcon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .audioAdjusterSidebarIcon ~ :is(svg, .MuiIcon-root) {
+            display: none;
+        }
+
         @media (prefers-reduced-motion: no-preference) {
             .audioAdjusterButton[aria-busy="true"] .audioAdjusterWaveformBar {
                 transform-box: fill-box;
