@@ -26,6 +26,37 @@
             background: rgba(127, 127, 127, 0.12);
         }
 
+        #audioJobs {
+            max-width: 52rem;
+            list-style: none;
+            padding: 0;
+        }
+
+        #audioJobs .audioJobHeading {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.25em 0.75em;
+        }
+
+        #audioJobs .audioJobState {
+            padding: 0.15em 0.55em;
+            border: 1px solid rgba(127, 127, 127, 0.45);
+            border-radius: 1em;
+            font-size: 0.875em;
+        }
+
+        #audioJobs .audioJobProgress {
+            margin-top: 0.45em;
+        }
+
+        #audioJobs progress {
+            display: block;
+            width: 100%;
+            max-width: 24rem;
+            margin-top: 0.25em;
+        }
+
         #audioMovieResult .audioMovieOption:focus-visible {
             outline: 2px solid currentColor;
             outline-offset: -2px;
@@ -39,6 +70,15 @@
                 You can still adjust movies from this page.
                 <a href="https://github.com/n00bcodr/Jellyfin-JavaScript-Injector" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">JavaScript Injector setup</a>
             </div>
+            <details class="verticalSection">
+                <summary style="cursor: pointer;">Set up the Adjust Audio button on movie pages</summary>
+                <ol>
+                    <li>Install <a href="https://github.com/n00bcodr/Jellyfin-JavaScript-Injector" target="_blank" rel="noopener noreferrer">JavaScript Injector</a> and restart Jellyfin.</li>
+                    <li>Open <strong>Dashboard → Plugins → JavaScript Injector</strong> and add a script named <strong>AudioAdjuster4Jellyfin</strong>.</li>
+                    <li>Set <strong>Script URL</strong> to <code>/AudioAdjuster/movie-button.js</code>. Include your Jellyfin base path if you use one, for example <code>/jellyfin/AudioAdjuster/movie-button.js</code>.</li>
+                    <li>Enable the script, save, and reload Jellyfin Web. Open a movie as an administrator to see <strong>Adjust Audio</strong>.</li>
+                </ol>
+            </details>
             <form id="AudioAdjusterForm">
                 <fieldset class="verticalSection">
                     <legend><h2>Movie sound settings</h2></legend>
@@ -110,7 +150,7 @@
             <section class="verticalSection" aria-labelledby="audioProgressHeading">
                 <h2 id="audioProgressHeading">Adjustment progress</h2>
                 <p id="audioProgressStatus" role="status"></p>
-                <ul id="audioJobs" aria-label="Recent movie adjustments" style="list-style: none; padding: 0;"></ul>
+                <ul id="audioJobs" aria-label="Recent movie adjustments"></ul>
                 <button is="emby-button" class="raised" type="button" id="audioRefresh">Refresh progress</button>
             </section>
         </div>
@@ -146,6 +186,8 @@
             let movieSearchRevision = 0;
             let selectedMovie;
             let pendingMovieId = '';
+            let progressTimer;
+            let progressRefresh;
 
             function closeConfirmation() {
                 pendingMovieId = '';
@@ -242,6 +284,11 @@
             }
 
             async function refresh() {
+                progressRefresh ??= loadProgress().finally(() => { progressRefresh = undefined; });
+                return progressRefresh;
+            }
+
+            async function loadProgress() {
                 const jobs = await ApiClient.ajax({
                     type: 'GET', url: ApiClient.getUrl('AudioAdjuster/jobs'), dataType: 'json'
                 });
@@ -251,13 +298,31 @@
                     entry.style.padding = '0.65em 0';
                     entry.style.borderBottom = '1px solid rgba(127, 127, 127, 0.35)';
                     const row = document.createElement('div');
-                    row.style.cssText = 'display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25em 1em;';
+                    row.className = 'audioJobHeading';
                     const title = document.createElement('strong');
                     title.textContent = job.Name;
                     const state = document.createElement('span');
+                    state.className = 'audioJobState';
                     state.textContent = labels[job.State] || job.State;
                     row.append(title, state);
                     entry.append(row);
+                    if (job.State === 'Running') {
+                        const phase = job.Phase || 'Adjusting audio';
+                        const progress = document.createElement('div');
+                        progress.className = 'audioJobProgress';
+                        const detail = document.createElement('div');
+                        const bar = document.createElement('progress');
+                        bar.max = 100;
+                        bar.setAttribute('aria-label', phase + ' for ' + job.Name);
+                        if (Number.isFinite(job.Percent)) {
+                            bar.value = job.Percent;
+                            detail.textContent = phase + ' (' + job.Percent + '%)';
+                        } else {
+                            detail.textContent = phase;
+                        }
+                        progress.append(detail, bar);
+                        entry.append(progress);
+                    }
                     if (job.Message) {
                         const message = document.createElement('div');
                         message.textContent = job.Message;
@@ -289,6 +354,10 @@
 
             page.addEventListener('pageshow', async () => {
                 loaded = false;
+                clearInterval(progressTimer);
+                progressTimer = setInterval(() => {
+                    refresh().catch(error => displayError(error, progressStatus));
+                }, 5000);
                 void checkInjector();
                 try {
                     const config = await ApiClient.getPluginConfiguration(pluginId);
@@ -302,9 +371,13 @@
                 } catch (error) { await displayError(error, settingsStatus); }
                 await refresh().catch(error => displayError(error, progressStatus));
             });
+            page.addEventListener('pagehide', () => clearInterval(progressTimer));
 
             find('audioMode').addEventListener('change', showMode);
-            find('audioRefresh').addEventListener('click', () => refresh().catch(error => displayError(error, progressStatus)));
+            find('audioRefresh').addEventListener('click', event => {
+                if (event.detail > 0) event.currentTarget.blur();
+                return refresh().catch(error => displayError(error, progressStatus));
+            });
             form.addEventListener('submit', async event => {
                 event.preventDefault();
                 if (!loaded) return;

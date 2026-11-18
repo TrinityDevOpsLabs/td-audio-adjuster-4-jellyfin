@@ -16,7 +16,8 @@ public sealed class AudioQueue(IMediaEncoder encoder, ILibraryMonitor monitor, I
         ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
     private readonly object _gate = new();
 
-    public sealed record Job(Guid Id, string Name, string State, string? Message, DateTimeOffset Updated);
+    public sealed record Job(Guid Id, string Name, string State, string? Message, DateTimeOffset Updated,
+        string? Phase = null, int? Percent = null);
 
     public Job[] GetJobs()
     {
@@ -24,11 +25,17 @@ public sealed class AudioQueue(IMediaEncoder encoder, ILibraryMonitor monitor, I
             return _jobs.Values.OrderByDescending(job => job.Updated).ToArray();
     }
 
+    public bool IsActive(Guid id)
+    {
+        lock (_gate)
+            return _jobs.TryGetValue(id, out var job) && job.State is "Queued" or "Running";
+    }
+
     public bool TrySubmit(Guid id, string name, string path, AudioSettings settings)
     {
         lock (_gate)
         {
-            if (_jobs.TryGetValue(id, out var job) && job.State is "Queued" or "Running")
+            if (IsActive(id))
                 return false;
             if (_activePaths.Contains(path) || !_pending.Writer.TryWrite((id, path, settings)))
                 return false;
@@ -44,12 +51,16 @@ public sealed class AudioQueue(IMediaEncoder encoder, ILibraryMonitor monitor, I
         await foreach (var (id, path, settings) in _pending.Reader.ReadAllAsync(stoppingToken))
         {
             lock (_gate)
-                _jobs[id] = _jobs[id] with { State = "Running", Updated = DateTimeOffset.UtcNow };
+                _jobs[id] = _jobs[id] with { State = "Running", Phase = "Preparing movie", Updated = DateTimeOffset.UtcNow };
 
             string? error = null;
             try
             {
-                await AudioProcessor.AdjustAsync(encoder.EncoderPath, encoder.ProbePath, path, settings, stoppingToken);
+                await AudioProcessor.AdjustAsync(encoder.EncoderPath, encoder.ProbePath, path, settings, stoppingToken, (phase, percent) =>
+                {
+                    lock (_gate)
+                        _jobs[id] = _jobs[id] with { Phase = phase, Percent = percent };
+                });
                 try
                 {
                     monitor.ReportFileSystemChanged(path);
@@ -77,11 +88,13 @@ public sealed class AudioQueue(IMediaEncoder encoder, ILibraryMonitor monitor, I
                     {
                         State = stoppingToken.IsCancellationRequested ? "Stopped" : error is null ? "Completed" : "Failed",
                         Message = error,
+                        Phase = null,
+                        Percent = null,
                         Updated = DateTimeOffset.UtcNow
                     };
 
                     foreach (var old in _jobs.Values.Where(job => job.State is not ("Queued" or "Running"))
-                        .OrderByDescending(job => job.Updated).Skip(50).ToArray())
+                        .OrderByDescending(job => job.Updated).Skip(25).ToArray())
                         _jobs.Remove(old.Id);
                 }
             }
