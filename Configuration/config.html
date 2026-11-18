@@ -188,6 +188,7 @@
             let pendingMovieId = '';
             let progressTimer;
             let progressRefresh;
+            const cancelRequests = new Set();
 
             function closeConfirmation() {
                 pendingMovieId = '';
@@ -292,8 +293,11 @@
                 const jobs = await ApiClient.ajax({
                     type: 'GET', url: ApiClient.getUrl('AudioAdjuster/jobs'), dataType: 'json'
                 });
-                const labels = { Queued: 'Waiting', Running: 'Adjusting audio', Completed: 'Finished', Failed: 'Could not finish', Stopped: 'Stopped' };
-                find('audioJobs').replaceChildren(...jobs.map(job => {
+                const labels = { Queued: 'Waiting', Running: 'Adjusting audio', Canceling: 'Canceling', Canceled: 'Canceled', Completed: 'Finished', Failed: 'Could not finish', Stopped: 'Stopped' };
+                const list = find('audioJobs');
+                const focusedId = document.activeElement?.dataset.cancelJob;
+                let nextFocus;
+                list.replaceChildren(...jobs.map(job => {
                     const entry = document.createElement('li');
                     entry.style.padding = '0.65em 0';
                     entry.style.borderBottom = '1px solid rgba(127, 127, 127, 0.35)';
@@ -305,6 +309,18 @@
                     state.className = 'audioJobState';
                     state.textContent = labels[job.State] || job.State;
                     row.append(title, state);
+                    if (job.State === 'Queued' || (job.State === 'Running' && job.Phase !== 'Finishing')) {
+                        const cancel = document.createElement('button');
+                        cancel.type = 'button';
+                        cancel.className = 'emby-button button-flat';
+                        cancel.textContent = 'Cancel';
+                        cancel.dataset.cancelJob = job.Id;
+                        cancel.setAttribute('aria-label', 'Cancel adjustment for ' + job.Name);
+                        cancel.disabled = cancelRequests.has(job.Id);
+                        cancel.addEventListener('click', () => cancelAdjustment(job.Id, cancel));
+                        row.append(cancel);
+                        if (focusedId === job.Id) nextFocus = cancel;
+                    }
                     entry.append(row);
                     if (job.State === 'Running') {
                         const phase = job.Phase || 'Adjusting audio';
@@ -330,7 +346,26 @@
                     }
                     return entry;
                 }));
+                if (focusedId) (nextFocus || find('audioRefresh')).focus();
                 progressStatus.textContent = jobs.length ? '' : 'No recent adjustments.';
+            }
+
+            async function cancelAdjustment(id, button) {
+                if (cancelRequests.has(id)) return;
+                cancelRequests.add(id);
+                button.disabled = true;
+                let failure;
+                try {
+                    await ApiClient.ajax({ type: 'POST', url: ApiClient.getUrl('AudioAdjuster/movies/' + id + '/cancel') });
+                } catch (error) {
+                    failure = error;
+                } finally {
+                    cancelRequests.delete(id);
+                    button.disabled = false;
+                }
+                await progressRefresh?.catch(() => {});
+                await refresh().catch(error => displayError(error, progressStatus));
+                if (failure) await displayError(failure, progressStatus);
             }
 
             async function checkInjector() {

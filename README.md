@@ -23,7 +23,7 @@ To show the **Adjust Audio** button on movie details pages, add the script manua
 3. Set **Script URL** to `/AudioAdjuster/movie-button.js`. If you access Jellyfin under a base path such as `/jellyfin`, use `/jellyfin/AudioAdjuster/movie-button.js`.
 4. Enable the script, save, and reload Jellyfin Web. Open a movie’s details page while signed in as an administrator to see **Adjust Audio**.
 
-Under **Adjust a movie**, type at least three characters of a movie title and select from up to 10 matches across the libraries your account can access. Each match shows the release year and library name when available. You can also paste a movie details URL or item ID. Use **Refresh progress** to see which movies are waiting, in progress, or finished. The queue and recent job history are held in memory and reset when Jellyfin restarts.
+Under **Adjust a movie**, type at least three characters of a movie title and select from up to 10 matches across the libraries your account can access. Each match shows the release year and library name when available. You can also paste a movie details URL or item ID. Under **Adjustment progress**, use **Cancel** to remove a waiting movie or stop an active adjustment before it reaches the final file replacement. The queue and recent job history are held in memory and reset when Jellyfin restarts.
 
 ## Choose what changes
 
