@@ -24,6 +24,11 @@ public sealed class AudioController(ILibraryManager library, AudioQueue queue) :
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public IActionResult MovieStatus(Guid id) => Ok(new { IsActive = queue.IsActive(id) });
 
+    [HttpPost("movies/{id:guid}/cancel")]
+    public IActionResult Cancel(Guid id) => queue.TryCancel(id)
+        ? Accepted()
+        : Conflict(new { Message = "This adjustment can no longer be canceled." });
+
     [HttpPost("movies/libraries")]
     public IActionResult MovieLibraries([FromBody] Guid[] ids)
     {

@@ -17,6 +17,7 @@ internal static class AudioProcessor
     public static async Task AdjustAsync(string encoder, string probe, string path, AudioSettings settings,
         CancellationToken token, Action<string, int?> reportProgress)
     {
+        token.ThrowIfCancellationRequested();
         if (!Supports(path))
             throw new IOException("The movie is no longer a supported local file.");
 
