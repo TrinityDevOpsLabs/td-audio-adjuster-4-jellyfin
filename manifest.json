@@ -9,6 +9,14 @@
         "imageUrl": "https://raw.githubusercontent.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/main/images/AudioAdjuster4Jellyfin.png",
         "versions": [
             {
+                "version": "1.2.2.0",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/releases/download/v1.2.2/audioadjuster4jellyfin_1.2.2.zip",
+                "checksum": "7ed18c8d14d280475ae9c64d5e845ac0",
+                "timestamp": "2026-11-18T02:29:02Z",
+                "changelog": "## Changes\n\n### Added\n\n- feat: link active audio button to settings and match sidebar icon ([7355396](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/73553966a619791a52906709f4bfaaf0b64d37b2))\n\n### Other changes\n\n- chore: index AudioAdjuster4Jellyfin v1.2.1 ([1d2813f](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/1d2813ff44ee8c9f7ecd1fd04522ff8a6e109385))\n- Merge branch 'main' into feat/audio-button-settings-and-sidebar-icon ([374163f](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/374163f13059c09b64be9b5fcb68e5474858b112))\n- Merge pull request #11 from TrinityDevOpsLabs/feat/audio-button-settings-and-sidebar-icon ([111e7fd](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/111e7fdd7a2d3e46183760b4b563c3e119da0280))\n\n**Full Changelog:** https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/compare/v1.2.1...v1.2.2\n"
+            },
+            {
                 "version": "1.2.1.0",
                 "targetAbi": "12.0.0.0",
                 "sourceUrl": "https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/releases/download/v1.2.1/audioadjuster4jellyfin_1.2.1.zip",
