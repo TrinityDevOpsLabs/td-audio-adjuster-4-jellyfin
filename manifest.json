@@ -9,6 +9,14 @@
         "imageUrl": "https://raw.githubusercontent.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/main/images/AudioAdjuster4Jellyfin.png",
         "versions": [
             {
+                "version": "1.2.0.0",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/releases/download/v1.2.0/audioadjuster4jellyfin_1.2.0.zip",
+                "checksum": "edf6aae59eeea65d7c230d345cba6063",
+                "timestamp": "2026-11-18T01:36:35Z",
+                "changelog": "## Changes\n\n### Added\n\n- feat: allow canceling movie audio adjustments ([4b76720](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/4b767205145c8e24245904851fd8f337b0031e96))\n\n### Other changes\n\n- chore: index AudioAdjuster4Jellyfin v1.1.0 ([9abfbb5](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/9abfbb56ea93f8f8763489d29c0185642b3cd7b0))\n- Merge pull request #9 from TrinityDevOpsLabs/feat/cancel-movie-adjustments ([c0fb835](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/c0fb8351b06247452a92886e79c76223f38130a8))\n\n**Full Changelog:** https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/compare/v1.1.0...v1.2.0\n"
+            },
+            {
                 "version": "1.1.0.0",
                 "targetAbi": "12.0.0.0",
                 "sourceUrl": "https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/releases/download/v1.1.0/audioadjuster4jellyfin_1.1.0.zip",
