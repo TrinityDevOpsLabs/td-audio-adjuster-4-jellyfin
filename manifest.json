@@ -9,6 +9,14 @@
         "imageUrl": "https://raw.githubusercontent.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/main/images/AudioAdjuster4Jellyfin.png",
         "versions": [
             {
+                "version": "1.1.0.0",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/releases/download/v1.1.0/audioadjuster4jellyfin_1.1.0.zip",
+                "checksum": "495bad69d763ea15c6596c4b9d8e7d3d",
+                "timestamp": "2026-11-18T01:06:08Z",
+                "changelog": "## Changes\n\n### Added\n\n- feat: show live movie adjustment progress ([85d4201](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/85d42015828906c78c2815323b33e68e1557a1a4))\n\n### Fixed\n\n- fix: show Trinity DevOps LLC as the Jellyfin catalog developer ([d7819ec](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/d7819ec19c80941c93b7f6b97c77ec28393e1a18))\n- fix: correct the v1.1.0 catalog checksum ([e1992c3](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/e1992c3c0397477e57761fe87ab098b8b7c18606))\n- fix: remove stale v1.1.0 catalog entry ([50c69c2](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/50c69c2e7040136c6d8a4fd07bdbb4c19fa5da4d))\n\n### Other changes\n\n- chore: index AudioAdjuster4Jellyfin v1.0.3 ([03e1b62](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/03e1b62f968ff4c69fdb7750340c795a467e90ce))\n- Merge pull request #6 from TrinityDevOpsLabs/feat/adjustment-progress ([c310736](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/c3107363659618e56a2b84e6ec06ac073e99fbbe))\n- chore: index AudioAdjuster4Jellyfin v1.1.0 ([dfd5609](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/dfd56090fc86558b33abcf1bfdf5b4f50ab6585e))\n- Merge branch 'main' into feat/adjustment-progress ([fef0281](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/fef0281d7c195c4bc28660e740b02ec2550b3965))\n- Merge pull request #7 from TrinityDevOpsLabs/feat/adjustment-progress ([3e1985c](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/3e1985c7925e0720186a830ce9aeaba5f7ac3cfd))\n- Merge pull request #8 from TrinityDevOpsLabs/fix/catalog-release-checksum ([6f36c60](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/6f36c609953e6d56d2f0bb9c3d7be494f7223469))\n\n**Full Changelog:** https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/compare/v1.0.3...v1.1.0\n"
+            },
+            {
                 "version": "1.0.3.0",
                 "targetAbi": "12.0.0.0",
                 "sourceUrl": "https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/releases/download/v1.0.3/audioadjuster4jellyfin_1.0.3.zip",
