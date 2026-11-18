@@ -5,7 +5,7 @@
         "name": "AudioAdjuster4Jellyfin",
         "description": "Queue movie audio adjustments using percentage, decibels, or loudness normalization. Replace the first audio track or add a selectable track, with optional backups.",
         "overview": "Adjust movie audio with FFmpeg",
-        "owner": "Awatatah",
+        "owner": "Trinity DevOps LLC",
         "imageUrl": "https://raw.githubusercontent.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/main/images/AudioAdjuster4Jellyfin.png",
         "versions": [
             {
