@@ -15,7 +15,8 @@ internal static class AudioProcessor
         && File.Exists(path) && File.GetAttributes(path).HasFlag(FileAttributes.ReparsePoint) == false;
 
     public static async Task AdjustAsync(string encoder, string probe, string path, AudioSettings settings,
-        CancellationToken token, Action<string, int?> reportProgress)
+        CancellationToken token, Action<string, int?> reportProgress, Action<string>? logDetails = null,
+        Action<string>? logDebug = null)
     {
         token.ThrowIfCancellationRequested();
         if (!Supports(path))
@@ -35,29 +36,45 @@ internal static class AudioProcessor
         var container = original.Extension.Equals(".mp4", StringComparison.OrdinalIgnoreCase) ? "mp4" : "matroska";
         var demuxer = container == "mp4" ? "mov" : "matroska";
         var append = settings.OutputMode == "Append";
+        logDebug?.Invoke($"Source {(hasBackup ? "original backup" : "current movie")}, container {container}, output {(append ? "append" : "replace")}");
 
         try
         {
-            using var streams = JsonDocument.Parse(await RunAsync(probe,
+            using var streams = JsonDocument.Parse(await RunAsync(probe, "Probe audio streams",
                 ["-v", "error", "-f", demuxer, "-select_streams", "a", "-show_streams", "-show_format", "-of", "json", source],
-                token, isProbe: true));
+                token, isProbe: true, logDebug: logDebug));
             var audio = streams.RootElement.GetProperty("streams").EnumerateArray().ToArray();
             var originals = audio.Where(stream => !IsAdjusted(stream)).ToArray();
             if (originals.Length == 0)
                 throw new IOException("The movie has no audio track to adjust.");
 
             var primary = originals[0].GetProperty("index").GetInt32();
+            logDebug?.Invoke($"Selected audio stream {primary} ({(originals[0].TryGetProperty("codec_name", out var codec) ? codec.GetString() : "unknown codec")}), {originals.Length} original audio track(s)");
             var duration = streams.RootElement.TryGetProperty("format", out var format)
                 && format.TryGetProperty("duration", out var value)
                 && double.TryParse(value.GetString(), CultureInfo.InvariantCulture, out var seconds)
                 && double.IsFinite(seconds) && seconds > 0 ? seconds : 0;
-            var filter = settings.Mode switch
+            string filter;
+            switch (settings.Mode)
             {
-                "Normalize" => await MeasureAsync(encoder, source, demuxer, primary, settings.TargetLufs, token,
-                    TrackProgress("Measuring loudness", duration, reportProgress)),
-                "Decibels" => $"volume={Number(Clamp(settings.GainDb, -6, -1, -2))}dB",
-                _ => $"volume={Number(Math.Clamp(settings.VolumePercent, 50, 90) / 100.0)}"
-            };
+                case "Normalize":
+                    var target = Clamp(settings.TargetLufs, -30, -14, -23);
+                    var measurement = await MeasureAsync(encoder, source, demuxer, primary, target, token,
+                        TrackProgress("Measuring loudness", duration, reportProgress), logDebug);
+                    filter = measurement.Filter;
+                    logDetails?.Invoke($"Original integrated loudness {Number(measurement.OriginalLufs)} LUFS, normalization target {Number(target)} LUFS");
+                    break;
+                case "Decibels":
+                    var gain = Number(Clamp(settings.GainDb, -6, -1, -2));
+                    filter = $"volume={gain}dB";
+                    logDetails?.Invoke($"Volume change {gain} dB");
+                    break;
+                default:
+                    var percent = Math.Clamp(settings.VolumePercent, 50, 90);
+                    filter = $"volume={Number(percent / 100.0)}";
+                    logDetails?.Invoke($"Keeping {percent}% of the original volume");
+                    break;
+            }
 
             List<string> args = ["-f", demuxer, "-i", source, "-map", "0"];
             foreach (var stream in audio.Where(IsAdjusted))
@@ -71,7 +88,8 @@ internal static class AudioProcessor
 
             args.AddRange(["-c", "copy", $"-c:a:{track}", "aac", $"-filter:a:{track}", filter,
                 $"-ar:a:{track}", "48000", "-f", container, temporary]);
-            await RunAsync(encoder, args, token, progress: TrackProgress("Writing adjusted movie", duration, reportProgress));
+            await RunAsync(encoder, "Write adjusted movie", args, token,
+                progress: TrackProgress("Writing adjusted movie", duration, reportProgress), logDebug: logDebug);
 
             reportProgress(settings.KeepBackup && !hasBackup ? "Saving original backup" : "Finishing", null);
             if (settings.KeepBackup && !hasBackup)
@@ -125,13 +143,13 @@ internal static class AudioProcessor
         };
     }
 
-    private static async Task<string> MeasureAsync(string encoder, string path, string demuxer, int streamIndex, double lufs,
-        CancellationToken token, Action<double> progress)
+    private static async Task<(string Filter, double OriginalLufs)> MeasureAsync(string encoder, string path, string demuxer, int streamIndex, double target,
+        CancellationToken token, Action<double> progress, Action<string>? logDebug)
     {
-        var filter = $"loudnorm=I={Number(Clamp(lufs, -30, -14, -23))}:TP=-2:LRA=50";
-        var report = await RunAsync(encoder,
+        var filter = $"loudnorm=I={Number(target)}:TP=-2:LRA=50";
+        var report = await RunAsync(encoder, "Measure loudness",
             ["-f", demuxer, "-i", path, "-map", $"0:{streamIndex}", "-af", filter + ":print_format=json", "-f", "null", "-"],
-            token, progress: progress);
+            token, progress: progress, logDebug: logDebug);
         var start = report.LastIndexOf('{');
         var end = report.LastIndexOf('}');
         if (start < 0 || end < start)
@@ -140,6 +158,7 @@ internal static class AudioProcessor
         using var json = JsonDocument.Parse(report[start..(end + 1)]);
         var keys = new[] { ("input_i", "measured_I"), ("input_tp", "measured_TP"),
             ("input_lra", "measured_LRA"), ("input_thresh", "measured_thresh"), ("target_offset", "offset") };
+        var originalLufs = 0.0;
         foreach (var (key, option) in keys)
         {
             if (!double.TryParse(json.RootElement.GetProperty(key).GetString(), CultureInfo.InvariantCulture, out var value)
@@ -147,13 +166,15 @@ internal static class AudioProcessor
                 throw new IOException("The first audio track has no measurable loudness.");
 
             filter += $":{option}={Number(value)}";
+            if (key == "input_i")
+                originalLufs = value;
         }
 
-        return filter + ":linear=true";
+        return (filter + ":linear=true", originalLufs);
     }
 
-    private static async Task<string> RunAsync(string encoder, IEnumerable<string> args, CancellationToken token,
-        bool isProbe = false, Action<double>? progress = null)
+    private static async Task<string> RunAsync(string encoder, string phase, IEnumerable<string> args, CancellationToken token,
+        bool isProbe = false, Action<double>? progress = null, Action<string>? logDebug = null)
     {
         token.ThrowIfCancellationRequested();
         var start = new ProcessStartInfo(encoder)
@@ -173,6 +194,8 @@ internal static class AudioProcessor
         foreach (var arg in common.Concat(args))
             start.ArgumentList.Add(arg);
 
+        var started = Stopwatch.GetTimestamp();
+        logDebug?.Invoke($"{phase} started");
         using var process = Process.Start(start) ?? throw new IOException("Could not start FFmpeg.");
         var stdout = isProbe ? process.StandardOutput.ReadToEndAsync() : Task.FromResult(string.Empty);
         var progressTask = progress is null ? Task.CompletedTask : ReadProgressAsync(process.StandardOutput, progress);
@@ -195,11 +218,13 @@ internal static class AudioProcessor
             await stderr;
             await stdout;
             await progressTask;
+            logDebug?.Invoke($"{phase} canceled after {Stopwatch.GetElapsedTime(started).TotalSeconds:F2} s");
             throw;
         }
 
         var report = await stderr;
         await progressTask;
+        logDebug?.Invoke($"{phase} exited with code {process.ExitCode} after {Stopwatch.GetElapsedTime(started).TotalSeconds:F2} s");
         if (process.ExitCode != 0)
             throw new IOException("FFmpeg failed. " + report[^Math.Min(report.Length, 1200)..].Trim());
 

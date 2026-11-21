@@ -120,6 +120,13 @@ public sealed class AudioQueue(IMediaEncoder encoder, ILibraryMonitor monitor, I
         {
             try
             {
+                var debug = settings.LoggingLevel == "Debug";
+                Action<string>? logDetails = debug || settings.LoggingLevel == "Verbose"
+                    ? details => logger.LogInformation("Audio adjustment for movie {ItemId}: {Details}", id, details)
+                    : null;
+                Action<string>? logDebug = debug
+                    ? details => logger.LogInformation("Audio adjustment debug for movie {ItemId}: {Details}", id, details)
+                    : null;
                 await AudioProcessor.AdjustAsync(encoder.EncoderPath, encoder.ProbePath, path, settings, cancellation.Token, (phase, percent) =>
                 {
                     lock (_gate)
@@ -127,7 +134,7 @@ public sealed class AudioQueue(IMediaEncoder encoder, ILibraryMonitor monitor, I
                         if (_jobs[id].State == "Running")
                             _jobs[id] = _jobs[id] with { Phase = phase, Percent = percent };
                     }
-                });
+                }, logDetails, logDebug);
                 try
                 {
                     monitor.ReportFileSystemChanged(path);
