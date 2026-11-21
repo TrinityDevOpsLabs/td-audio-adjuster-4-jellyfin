@@ -8,14 +8,25 @@ using Microsoft.Extensions.Logging;
 
 namespace AudioAdjuster4Jellyfin;
 
-public sealed class DiscordNotifications(ILibraryManager library, ILogger<DiscordNotifications> logger) : BackgroundService
+public sealed class DiscordNotifications : BackgroundService
 {
     private readonly Channel<(Uri Webhook, AudioQueue.Job Job, string Path)> _pending =
         Channel.CreateBounded<(Uri, AudioQueue.Job, string)>(new BoundedChannelOptions(100) { SingleReader = true });
-    private readonly HttpClient _client = new(new HttpClientHandler { AllowAutoRedirect = false })
+    private readonly HttpClient _client;
+    private readonly ILibraryManager _library;
+    private readonly ILogger<DiscordNotifications> _logger;
+
+    public DiscordNotifications(ILibraryManager library, ILogger<DiscordNotifications> logger)
+        : this(library, logger, new HttpClientHandler { AllowAutoRedirect = false })
     {
-        Timeout = TimeSpan.FromSeconds(10)
-    };
+    }
+
+    internal DiscordNotifications(ILibraryManager library, ILogger<DiscordNotifications> logger, HttpMessageHandler handler)
+    {
+        _library = library;
+        _logger = logger;
+        _client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(10) };
+    }
 
     internal static bool TryGetWebhook(string? value, out Uri webhook)
     {
@@ -36,7 +47,7 @@ public sealed class DiscordNotifications(ILibraryManager library, ILogger<Discor
     {
         if (settings.DiscordEnabled && TryGetWebhook(settings.DiscordWebhookUrl, out var webhook) &&
             !_pending.Writer.TryWrite((webhook, job, path)))
-            logger.LogWarning("Discord notification queue is full for movie {ItemId}", job.Id);
+            _logger.LogWarning("Discord notification queue is full for movie {ItemId}", job.Id);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -54,7 +65,7 @@ public sealed class DiscordNotifications(ILibraryManager library, ILogger<Discor
 
                     if (response.StatusCode != HttpStatusCode.TooManyRequests || attempt == 3)
                     {
-                        logger.LogWarning("Discord returned HTTP {StatusCode} for movie {ItemId}", (int)response.StatusCode, job.Id);
+                        _logger.LogWarning("Discord returned HTTP {StatusCode} for movie {ItemId}", (int)response.StatusCode, job.Id);
                         break;
                     }
 
@@ -69,7 +80,7 @@ public sealed class DiscordNotifications(ILibraryManager library, ILogger<Discor
             }
             catch (Exception ex)
             {
-                logger.LogWarning("Could not send Discord notification for movie {ItemId} ({ErrorType})", job.Id, ex.GetType().Name);
+                _logger.LogWarning("Could not send Discord notification for movie {ItemId} ({ErrorType})", job.Id, ex.GetType().Name);
             }
         }
     }
@@ -110,16 +121,16 @@ public sealed class DiscordNotifications(ILibraryManager library, ILogger<Discor
     {
         try
         {
-            if (library.GetItemById(id) is { } item)
+            if (_library.GetItemById(id) is { } item)
             {
-                var names = string.Join(", ", library.GetCollectionFolders(item).Select(folder => folder.Name).Distinct());
+                var names = string.Join(", ", _library.GetCollectionFolders(item).Select(folder => folder.Name).Distinct());
                 if (!string.IsNullOrWhiteSpace(names))
                     return names;
             }
         }
         catch (Exception ex)
         {
-            logger.LogDebug(ex, "Could not find the Jellyfin library for movie {ItemId}", id);
+            _logger.LogDebug(ex, "Could not find the Jellyfin library for movie {ItemId}", id);
         }
 
         return "Unknown";
