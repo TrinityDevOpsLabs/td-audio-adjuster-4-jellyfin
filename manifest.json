@@ -9,6 +9,14 @@
         "imageUrl": "https://raw.githubusercontent.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/main/images/AudioAdjuster4Jellyfin.png",
         "versions": [
             {
+                "version": "1.3.0.0",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/releases/download/v1.3.0/audioadjuster4jellyfin_1.3.0.zip",
+                "checksum": "a8e35fce40e2dc62fb144e0771ea340e",
+                "timestamp": "2026-11-21T02:06:46Z",
+                "changelog": "## Changes\n\n### Added\n\n- feat: add Discord notifications for audio adjustment jobs ([4443848](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/4443848e5ad5826b1603fd40feabb2c05f054689))\n\n### Other changes\n\n- chore: index AudioAdjuster4Jellyfin v1.2.2 ([d7c5eae](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/d7c5eaecc0343f82d8f66fd13673419bb1994662))\n- Merge pull request #12 from TrinityDevOpsLabs/feature/discord-notifications ([061ff97](https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/commit/061ff97913d81c0071f98d55c5d75f12acd6a39d))\n\n**Full Changelog:** https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/compare/v1.2.2...v1.3.0\n"
+            },
+            {
                 "version": "1.2.2.0",
                 "targetAbi": "12.0.0.0",
                 "sourceUrl": "https://github.com/TrinityDevOpsLabs/td-audio-adjuster-4-jellyfin/releases/download/v1.2.2/audioadjuster4jellyfin_1.2.2.zip",
