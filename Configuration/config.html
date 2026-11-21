@@ -119,6 +119,19 @@
                         <div class="fieldDescription" id="audioBackupHint">Keep a full copy so you can restore the original movie later. This takes extra disk space. If a backup exists, new adjustments start from that copy.</div>
                     </div>
                 </fieldset>
+                <fieldset class="verticalSection">
+                    <legend><h2>Discord notifications</h2></legend>
+                    <div class="checkboxContainer">
+                        <label><input is="emby-checkbox" type="checkbox" id="audioDiscordEnabled" /><span>Enable Discord notifications</span></label>
+                    </div>
+                    <div class="inputContainer" id="audioDiscordSettings" hidden>
+                        <label class="inputLabel" for="audioDiscordWebhook">Discord webhook URL</label>
+                        <input is="emby-input" type="password" id="audioDiscordWebhook" autocomplete="off"
+                            pattern="https://discord\.com/api/webhooks/[0-9]+/[A-Za-z0-9_\x2d]+"
+                            aria-describedby="audioDiscordHint" disabled />
+                        <div class="fieldDescription" id="audioDiscordHint">Paste the webhook URL from the Discord channel where you want submission, completion, and error notifications.</div>
+                    </div>
+                </fieldset>
                 <button is="emby-button" type="submit" class="raised button-submit block">Save settings</button>
                 <p id="audioSettingsStatus" role="status"></p>
             </form>
@@ -179,7 +192,9 @@
                 GainDb: 'audioGain',
                 TargetLufs: 'audioTarget',
                 OutputMode: 'audioOutput',
-                KeepBackup: 'audioBackup'
+                KeepBackup: 'audioBackup',
+                DiscordEnabled: 'audioDiscordEnabled',
+                DiscordWebhookUrl: 'audioDiscordWebhook'
             };
             let loaded = false;
             let movieSearchTimer;
@@ -277,6 +292,14 @@
                     row.hidden = row.dataset.mode !== find('audioMode').value;
                     row.querySelector('input').disabled = row.hidden;
                 }
+            }
+
+            function showDiscordSettings() {
+                const enabled = find('audioDiscordEnabled').checked;
+                const webhook = find('audioDiscordWebhook');
+                find('audioDiscordSettings').hidden = !enabled;
+                webhook.disabled = !enabled;
+                webhook.required = enabled;
             }
 
             async function displayError(error, messageArea) {
@@ -399,9 +422,10 @@
                     for (const [key, id] of Object.entries(fields)) {
                         const input = find(id);
                         if (input.type === 'checkbox') input.checked = config[key];
-                        else input.value = config[key];
+                        else input.value = config[key] ?? '';
                     }
                     showMode();
+                    showDiscordSettings();
                     loaded = true;
                 } catch (error) { await displayError(error, settingsStatus); }
                 await refresh().catch(error => displayError(error, progressStatus));
@@ -409,6 +433,12 @@
             page.addEventListener('pagehide', () => clearInterval(progressTimer));
 
             find('audioMode').addEventListener('change', showMode);
+            find('audioDiscordEnabled').addEventListener('change', showDiscordSettings);
+            find('audioDiscordWebhook').addEventListener('input', event => {
+                const input = event.currentTarget;
+                const value = input.value.trim();
+                if (value !== input.value) input.value = value;
+            });
             find('audioRefresh').addEventListener('click', event => {
                 if (event.detail > 0) event.currentTarget.blur();
                 return refresh().catch(error => displayError(error, progressStatus));
