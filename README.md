@@ -42,6 +42,12 @@ The default is to replace the first audio track with a backup. Future adjustment
 
 To restore a backup, wait for any job for that movie to finish, move the adjusted file out of the library, rename the backup to the original movie filename, then refresh the movie in Jellyfin.
 
+## Discord notifications
+
+In the plugin settings, select **Enable Discord notifications**, paste the URL of the webhook from your Discord channel, and save. The webhook URL is required while notifications are enabled.
+
+Discord receives a blue embed when Jellyfin accepts a movie adjustment, a green embed when the adjustment completes, and a red embed when processing fails. Completion embeds include the output file path, and error embeds include the processing error. Settings apply to adjustments submitted after you save.
+
 ## Media requirements
 
 - A Jellyfin administrator must submit each job. The movie must be a local MKV or MP4 with embedded audio, in a folder writable by the Jellyfin server. Movies with multiple versions use the file associated with the submitted item ID.

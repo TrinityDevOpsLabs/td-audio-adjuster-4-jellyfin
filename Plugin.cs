@@ -26,6 +26,15 @@ public sealed class Plugin : BasePlugin<AudioSettings>, IHasWebPages
     public override Guid Id => PluginId;
     public override string Name => "AudioAdjuster4Jellyfin";
 
+    public override void UpdateConfiguration(BasePluginConfiguration configuration)
+    {
+        if (configuration is AudioSettings { DiscordEnabled: true } settings
+            && !DiscordNotifications.TryGetWebhook(settings.DiscordWebhookUrl, out _))
+            throw new ArgumentException("Enter a valid Discord webhook URL to enable notifications.", nameof(configuration));
+
+        base.UpdateConfiguration(configuration);
+    }
+
     public IEnumerable<PluginPageInfo> GetPages()
     {
         yield return new PluginPageInfo
@@ -48,6 +57,8 @@ public sealed class AudioSettings : BasePluginConfiguration
     public double TargetLufs { get; set; } = -23;
     public string OutputMode { get; set; } = "Replace";
     public bool KeepBackup { get; set; } = true;
+    public bool DiscordEnabled { get; set; }
+    public string DiscordWebhookUrl { get; set; } = string.Empty;
 }
 
 public sealed class ServiceRegistrator : IPluginServiceRegistrator
@@ -57,6 +68,8 @@ public sealed class ServiceRegistrator : IPluginServiceRegistrator
         if (!Plugin.SupportsServer(applicationHost))
             return;
 
+        services.AddSingleton<DiscordNotifications>();
+        services.AddHostedService(provider => provider.GetRequiredService<DiscordNotifications>());
         services.AddSingleton<AudioQueue>();
         services.AddHostedService(provider => provider.GetRequiredService<AudioQueue>());
     }

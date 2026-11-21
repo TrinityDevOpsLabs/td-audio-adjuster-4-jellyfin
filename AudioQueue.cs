@@ -6,7 +6,8 @@ using Microsoft.Extensions.Logging;
 
 namespace AudioAdjuster4Jellyfin;
 
-public sealed class AudioQueue(IMediaEncoder encoder, ILibraryMonitor monitor, ILogger<AudioQueue> logger)
+public sealed class AudioQueue(IMediaEncoder encoder, ILibraryMonitor monitor, ILogger<AudioQueue> logger,
+    DiscordNotifications discord)
     : BackgroundService
 {
     private readonly LinkedList<(Guid Id, string Path, AudioSettings Settings)> _pending = new();
@@ -48,6 +49,7 @@ public sealed class AudioQueue(IMediaEncoder encoder, ILibraryMonitor monitor, I
             _pending.AddLast((id, path, settings));
             _activePaths.Add(path);
             _jobs[id] = new(id, name, "Queued", null, DateTimeOffset.UtcNow);
+            discord.Enqueue(_jobs[id], path, settings);
             _ready.Writer.TryWrite(true);
             return true;
         }
@@ -150,7 +152,9 @@ public sealed class AudioQueue(IMediaEncoder encoder, ILibraryMonitor monitor, I
                 lock (_gate)
                 {
                     _runningCancellation = null;
-                    FinishJob(id, path, state, error);
+                    var finished = FinishJob(id, path, state, error);
+                    if (state is "Completed" or "Failed")
+                        discord.Enqueue(finished, path, settings);
                 }
             }
         }
@@ -159,10 +163,10 @@ public sealed class AudioQueue(IMediaEncoder encoder, ILibraryMonitor monitor, I
 
     private static bool IsActive(Job job) => job.State is "Queued" or "Running" or "Canceling";
 
-    private void FinishJob(Guid id, string path, string state, string? error)
+    private Job FinishJob(Guid id, string path, string state, string? error)
     {
         _activePaths.Remove(path);
-        _jobs[id] = _jobs[id] with
+        var finished = _jobs[id] with
         {
             State = state,
             Message = error,
@@ -170,9 +174,12 @@ public sealed class AudioQueue(IMediaEncoder encoder, ILibraryMonitor monitor, I
             Percent = null,
             Updated = DateTimeOffset.UtcNow
         };
+        _jobs[id] = finished;
 
         foreach (var old in _jobs.Values.Where(job => !IsActive(job))
             .OrderByDescending(job => job.Updated).Skip(25).ToArray())
             _jobs.Remove(old.Id);
+
+        return finished;
     }
 }
