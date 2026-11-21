@@ -42,6 +42,16 @@ The default is to replace the first audio track with a backup. Future adjustment
 
 To restore a backup, wait for any job for that movie to finish, move the adjusted file out of the library, rename the backup to the original movie filename, then refresh the movie in Jellyfin.
 
+## Log level
+
+Choose a **Log level** in the plugin settings for newly submitted jobs. All diagnostics go to the Jellyfin server log.
+
+- **Info** (default) keeps standard logging, including warnings and errors.
+- **Verbose** adds the original measured LUFS and target for Normalize, or the applied percentage or gain for the other modes.
+- **Debug** includes Verbose details plus the source, selected audio stream and codec, output mode, and phase timings and exit codes from FFmpeg and FFprobe. The plugin writes these entries at Jellyfin’s Information severity so the selector works with Jellyfin’s default log filter.
+
+Debug can make server logs noisy and increase disk usage, especially when many jobs run. Return to Info after troubleshooting and review logs for media details before sharing them.
+
 ## Discord notifications
 
 In the plugin settings, select **Enable Discord notifications**, paste the URL of the webhook from your Discord channel, and save. The webhook URL is required while notifications are enabled.

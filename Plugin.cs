@@ -57,6 +57,7 @@ public sealed class AudioSettings : BasePluginConfiguration
     public double TargetLufs { get; set; } = -23;
     public string OutputMode { get; set; } = "Replace";
     public bool KeepBackup { get; set; } = true;
+    public string LoggingLevel { get; set; } = "Info";
     public bool DiscordEnabled { get; set; }
     public string DiscordWebhookUrl { get; set; } = string.Empty;
 }
